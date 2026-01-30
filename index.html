@@ -4,6 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reporte CCTV – Formato Planilla</title>
+  
+  <!-- Librerías para exportar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
   <style>
     /* --- Configuración general Word-like --- */
     :root{
@@ -116,6 +121,23 @@
     }
     
     .select-field:focus{
+      outline: none;
+      background-color: #f0f8ff;
+    }
+    
+    /* Input de texto estilo Word */
+    .text-input{
+      width: 100%;
+      border: none;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      padding: 0;
+      line-height: 1.15;
+      box-sizing: border-box;
+    }
+    
+    .text-input:focus{
       outline: none;
       background-color: #f0f8ff;
     }
@@ -255,6 +277,100 @@
       font-size: 10pt;
       color: #777;
       margin-bottom: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.2s ease;
+    }
+    
+    .imagePlaceholder:hover{
+      background-color: #f0f0f0;
+      border-color: #999;
+    }
+    
+    .imagePlaceholder.has-image{
+      background: transparent;
+      padding: 0;
+    }
+    
+    .imagePlaceholder img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .imagePlaceholder .placeholder-text{
+      pointer-events: none;
+    }
+    
+    .imagePlaceholder input[type="file"]{
+      display: none;
+    }
+    
+    /* Botón para eliminar imagen */
+    .remove-image-btn{
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      background-color: rgba(220, 53, 69, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+      z-index: 10;
+    }
+    
+    .remove-image-btn:hover{
+      background-color: rgba(200, 35, 51, 1);
+    }
+    
+    .imagePlaceholder.has-image .remove-image-btn{
+      display: flex;
+    }
+    
+    /* Botón exportar PDF */
+    .export-section{
+      margin-top: 15px;
+      text-align: center;
+      padding: 10px 0;
+    }
+    
+    .export-pdf-btn{
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 11pt;
+      font-family: Calibri, Arial, sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .export-pdf-btn:hover{
+      background-color: #0052a3;
+    }
+    
+    .export-pdf-btn:active{
+      background-color: #004080;
+      transform: translateY(1px);
+    }
+    
+    .export-pdf-btn:disabled{
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
     .timeStamp{
       font-weight: 700;
@@ -307,6 +423,10 @@
       .imagePlaceholder{
         border: 1px solid #ddd;
       }
+      .imagePlaceholder:hover{
+        background-color: #f9f9f9;
+        border-color: #ccc;
+      }
       .date-input {
         -webkit-appearance: none;
         appearance: none;
@@ -318,11 +438,24 @@
         appearance: none;
         -webkit-appearance: none;
       }
+      .text-input{
+        border: none;
+        background: transparent;
+      }
       .cb{
         cursor: default;
       }
       .cb:hover{
         background-color: transparent;
+      }
+      .imagePlaceholder{
+        cursor: default;
+      }
+      .remove-image-btn{
+        display: none !important;
+      }
+      .export-section{
+        display: none !important;
       }
     }
   </style>
@@ -359,7 +492,7 @@
         <tr class="rowCompact">
           <td class="rowLabel">Reportado por</td>
           <td class="value">
-            <select class="select-field">
+            <select class="select-field" id="reportadoPor">
               <option value="" selected disabled>Choose an item.</option>
               <option>G. López</option>
               <option>E. Sosa</option>
@@ -404,7 +537,9 @@
           <td class="rowLabel">Sitio</td>
           <td class="value oneline">PLANTA PACHECO</td>
           <td class="rowLabel" style="text-align:center;">Caso ID</td>
-          <td class="value oneline">CCTV-0004</td>
+          <td class="value oneline">
+            <input type="text" id="casoId" class="text-input" value="CCTV-0004" maxlength="30" placeholder="Ingrese Caso ID">
+          </td>
         </tr>
 
         <!-- Eventos registrados / Área - CHECKBOXES INTERACTIVOS -->
@@ -421,7 +556,9 @@
             </div>
           </td>
           <td class="rowLabel">2.- Área de los eventos:</td>
-          <td class="value oneline">Interior Comedor de planta</td>
+          <td class="value oneline">
+            <input type="text" id="areaEventos" class="text-input" value="Interior Comedor de planta" maxlength="50" placeholder="Ingrese el área">
+          </td>
         </tr>
 
         <!-- Novedades -->
@@ -442,45 +579,81 @@
               <tr>
                 <td class="imageCell">
                   <div class="timeStamp">0:13 Ingresa comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="1">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="1" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="1">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">0:17 continua en el comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="2">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="2" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="2">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">0:30 regresa a su sector</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="3">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="3" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="3">
+                  </div>
                 </td>
               </tr>
               <!-- Segunda fila de imágenes -->
               <tr>
                 <td class="imageCell">
                   <div class="timeStamp">0:50 se dirige al comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="4">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="4" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="4">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">1:23 en el comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="5">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="5" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="5">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">2:47 regresa a su sector</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="6">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="6" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="6">
+                  </div>
                 </td>
               </tr>
               <!-- Tercera fila de imágenes -->
               <tr>
                 <td class="imageCell">
                   <div class="timeStamp">3:07 se dirige al comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="7">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="7" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="7">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">3:20 se encuentra en el comedor</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="8">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="8" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="8">
+                  </div>
                 </td>
                 <td class="imageCell">
                   <div class="timeStamp">3:37 regresa a su sector</div>
-                  <div class="imagePlaceholder">Imagen CCTV</div>
+                  <div class="imagePlaceholder" data-image-slot="9">
+                    <span class="placeholder-text">Imagen CCTV</span>
+                    <button class="remove-image-btn" data-remove-slot="9" title="Eliminar imagen">×</button>
+                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="9">
+                  </div>
                 </td>
               </tr>
             </table>
@@ -495,7 +668,7 @@
             <td class="signatureCell">
               <div class="signatureLine">
                 Reporte generado por<br>
-                Choose an item.
+                <span id="reporteGeneradoPor">Choose an item.</span>
               </div>
             </td>
             <td class="signatureCell">
@@ -508,6 +681,11 @@
         </table>
       </div>
 
+      <!-- Botón de exportar a PDF -->
+      <div class="export-section">
+        <button id="exportPdfBtn" class="export-pdf-btn">📄 Exportar a PDF</button>
+      </div>
+
       <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
     </div>
   </div>
@@ -518,6 +696,96 @@
       const fechaInput = document.getElementById('fechaEventos');
       fechaInput.title = 'Haz clic para seleccionar una fecha';
 
+      // ========== SINCRONIZACIÓN REPORTADO POR ==========
+      const reportadoPorSelect = document.getElementById('reportadoPor');
+      const reporteGeneradoPorSpan = document.getElementById('reporteGeneradoPor');
+      
+      // Sincronizar cuando cambia la selección
+      reportadoPorSelect.addEventListener('change', () => {
+        const selectedValue = reportadoPorSelect.value;
+        reporteGeneradoPorSpan.textContent = selectedValue || 'Choose an item.';
+        console.log('Reportado por actualizado:', selectedValue);
+      });
+
+      // ========== MANEJO DE IMÁGENES ==========
+      const imagePlaceholders = document.querySelectorAll('.imagePlaceholder');
+      
+      imagePlaceholders.forEach(placeholder => {
+        const fileInput = placeholder.querySelector('input[type="file"]');
+        const removeBtn = placeholder.querySelector('.remove-image-btn');
+        const slotNumber = placeholder.dataset.imageSlot;
+        
+        // Al hacer click en el placeholder (pero no en el botón de eliminar)
+        placeholder.addEventListener('click', (e) => {
+          // Si el click fue en el botón de eliminar, no abrir selector
+          if (e.target.classList.contains('remove-image-btn')) {
+            return;
+          }
+          fileInput.click();
+        });
+        
+        // Cuando se selecciona un archivo
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          
+          if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+              // Ocultar el texto placeholder
+              const placeholderText = placeholder.querySelector('.placeholder-text');
+              if (placeholderText) {
+                placeholderText.style.display = 'none';
+              }
+              
+              // Verificar si ya existe una imagen
+              let img = placeholder.querySelector('img');
+              if (!img) {
+                img = document.createElement('img');
+                placeholder.appendChild(img);
+              }
+              
+              // Establecer la imagen
+              img.src = event.target.result;
+              placeholder.classList.add('has-image');
+              
+              console.log(`Imagen cargada en slot ${slotNumber}: ${file.name}`);
+            };
+            
+            reader.readAsDataURL(file);
+          } else {
+            alert('Por favor, selecciona solo archivos PNG o JPG');
+            fileInput.value = '';
+          }
+        });
+        
+        // Función para eliminar imagen
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Evitar que se abra el selector de archivos
+          
+          // Eliminar la imagen
+          const img = placeholder.querySelector('img');
+          if (img) {
+            img.remove();
+          }
+          
+          // Mostrar nuevamente el texto placeholder
+          const placeholderText = placeholder.querySelector('.placeholder-text');
+          if (placeholderText) {
+            placeholderText.style.display = 'block';
+          }
+          
+          // Remover la clase has-image
+          placeholder.classList.remove('has-image');
+          
+          // Resetear el input file
+          fileInput.value = '';
+          
+          console.log(`Imagen eliminada del slot ${slotNumber}`);
+        });
+      });
+
+      // ========== CHECKBOXES INTERACTIVOS ==========
       // Función para manejar checkboxes con exclusión mutua
       function setupCheckboxGroup(groupName) {
         const groupItems = document.querySelectorAll(`[data-checkbox-group="${groupName}"]`);
@@ -548,16 +816,83 @@
       setupCheckboxGroup('tipoReporte');
       setupCheckboxGroup('eventosRegistrados');
 
-      // Función para obtener valores seleccionados (útil para exportar datos)
+      // ========== EXPORTAR A PDF ==========
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+      
+      exportPdfBtn.addEventListener('click', async () => {
+        // Deshabilitar el botón mientras se genera el PDF
+        exportPdfBtn.disabled = true;
+        exportPdfBtn.textContent = '⏳ Generando PDF...';
+        
+        try {
+          // Ocultar temporalmente el botón de exportar y los botones de eliminar
+          const exportSection = document.querySelector('.export-section');
+          const removeButtons = document.querySelectorAll('.remove-image-btn');
+          
+          exportSection.style.display = 'none';
+          removeButtons.forEach(btn => btn.style.display = 'none');
+          
+          // Capturar el contenido de la página
+          const pageElement = document.querySelector('.page');
+          
+          const canvas = await html2canvas(pageElement, {
+            scale: 2, // Mayor calidad
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
+          // Crear PDF
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          // Calcular dimensiones para ajustar al A4
+          const imgWidth = 210; // A4 width in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          // Agregar imagen al PDF
+          const imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          
+          // Generar nombre de archivo con fecha y caso ID
+          const casoId = document.getElementById('casoId').value || 'CCTV';
+          const fecha = document.getElementById('fechaEventos').value || new Date().toISOString().split('T')[0];
+          const fileName = `Reporte_CCTV_${casoId}_${fecha}.pdf`;
+          
+          // Descargar el PDF
+          pdf.save(fileName);
+          
+          console.log('PDF generado exitosamente:', fileName);
+          
+          // Mostrar nuevamente los elementos ocultos
+          exportSection.style.display = 'block';
+          removeButtons.forEach(btn => btn.style.display = '');
+          
+        } catch (error) {
+          console.error('Error al generar PDF:', error);
+          alert('Hubo un error al generar el PDF. Por favor, intenta nuevamente.');
+        } finally {
+          // Rehabilitar el botón
+          exportPdfBtn.disabled = false;
+          exportPdfBtn.textContent = '📄 Exportar a PDF';
+        }
+      });
+
+      // ========== FUNCIÓN PARA OBTENER DATOS DEL FORMULARIO ==========
       window.getFormData = function() {
         const data = {
-          reportadoPor: document.querySelector('.select-field').value,
-          fechaEventos: document.getElementById('fechaEventos').value,
+          reportadoPor: reportadoPorSelect.value,
+          fechaEventos: fechaInput.value,
           tipoReporte: null,
           eventosRegistrados: null,
           sitio: 'PLANTA PACHECO',
-          casoId: 'CCTV-0004',
-          areaEventos: 'Interior Comedor de planta'
+          casoId: document.getElementById('casoId').value,
+          areaEventos: document.getElementById('areaEventos').value,
+          imagenes: {}
         };
 
         // Obtener tipo de reporte seleccionado
@@ -572,15 +907,42 @@
           data.eventosRegistrados = eventosChecked.parentElement.dataset.checkboxValue;
         }
 
+        // Obtener información de imágenes cargadas
+        imagePlaceholders.forEach(placeholder => {
+          const slotNumber = placeholder.dataset.imageSlot;
+          const img = placeholder.querySelector('img');
+          const fileInput = placeholder.querySelector('input[type="file"]');
+          
+          if (img && img.src) {
+            data.imagenes[`slot${slotNumber}`] = {
+              loaded: true,
+              fileName: fileInput.files[0] ? fileInput.files[0].name : 'unknown',
+              dataUrl: img.src
+            };
+          } else {
+            data.imagenes[`slot${slotNumber}`] = {
+              loaded: false
+            };
+          }
+        });
+
         return data;
       };
 
       // Para testing - mostrar datos en consola al cambiar valores
-      document.querySelector('.select-field').addEventListener('change', () => {
+      reportadoPorSelect.addEventListener('change', () => {
         console.log('Datos del formulario:', window.getFormData());
       });
 
       fechaInput.addEventListener('change', () => {
+        console.log('Datos del formulario:', window.getFormData());
+      });
+      
+      document.getElementById('areaEventos').addEventListener('change', () => {
+        console.log('Datos del formulario:', window.getFormData());
+      });
+      
+      document.getElementById('casoId').addEventListener('change', () => {
         console.log('Datos del formulario:', window.getFormData());
       });
     });
