@@ -672,7 +672,7 @@
 
         <!-- Eventos registrados / Área - CHECKBOXES INTERACTIVOS -->
         <tr>
-          <td class="rowLabel">1.- ¿Eventos Registrados?:</td>
+          <td class="rowLabel">1.- ¿Preservar evidencia?</td>
           <td class="value">
             <div class="opts">
               <span data-checkbox-group="eventosRegistrados" data-checkbox-value="si">
@@ -720,7 +720,7 @@
         </table>
       </div>
 
-      <div class="image-upload-area" style="border-top: 2px solid #000; margin-top: 20px; padding-top: 20px;">
+      <div id="preservacionSection" class="image-upload-area" style="border-top: 2px solid #000; margin-top: 20px; padding-top: 20px; display: none;">
         <h3 style="font-size: 12pt; font-weight: 700;">PRESERVACIÓN DE LA EVIDENCIA</h3>
         <div class="upload-prompt">
           <p style="font-weight: 700; margin-bottom: 10px;">Cargar archivos para Cadena de Custodia (Video/Fotos):</p>
@@ -988,6 +988,24 @@
       // Inicializar grupos de checkboxes
       setupCheckboxGroup('tipoReporte');
       setupCheckboxGroup('eventosRegistrados');
+
+      // Control de visibilidad para la sección de preservación
+      const preservacionSection = document.getElementById('preservacionSection');
+      const opcionesEventos = document.querySelectorAll('[data-checkbox-group="eventosRegistrados"]');
+      
+      opcionesEventos.forEach(opcion => {
+        opcion.addEventListener('click', () => {
+          const valor = opcion.dataset.checkboxValue;
+          if (valor === 'si') {
+            preservacionSection.style.display = 'block';
+          } else {
+            preservacionSection.style.display = 'none';
+            // Opcional: limpiar la tabla de hashes si se marca "no"
+            document.getElementById('hashTableBody').innerHTML = '';
+            document.getElementById('cadenaCustodiaContainer').style.display = 'none';
+          }
+        });
+      });
 
       // ========== CÁLCULO DE HASH SHA-256 ==========
       const calculateHashBtn = document.getElementById('calculateHashBtn');
