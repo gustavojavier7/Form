@@ -142,6 +142,32 @@
       background-color: #f0f8ff;
     }
     
+    .text-input.invalid{
+      border: 2px solid #dc3545;
+      padding: 2px;
+      background-color: #fff5f5;
+    }
+    
+    /* Select con validación */
+    .select-field.invalid{
+      border: 2px solid #dc3545;
+      padding: 2px;
+      background-color: #fff5f5;
+    }
+    
+    /* Date input con validación */
+    .date-input.invalid{
+      border: 2px solid #dc3545;
+      padding: 2px;
+      background-color: #fff5f5;
+    }
+    
+    /* Textarea con validación */
+    .novedades-textarea.invalid{
+      border: 2px solid #dc3545;
+      background-color: #fff5f5;
+    }
+    
     /* Protección contra wrap */
     .oneline{
       white-space: nowrap;
@@ -547,6 +573,18 @@
       #bulkImageUpload{
         display: none !important;
       }
+      /* Eliminar bordes de validación en impresión */
+      .invalid{
+        border: none !important;
+        background: transparent !important;
+      }
+      .text-input.invalid,
+      .select-field.invalid,
+      .date-input.invalid,
+      .novedades-textarea.invalid{
+        border: none !important;
+        background: transparent !important;
+      }
     }
   </style>
 </head>
@@ -743,6 +781,37 @@
         const areaEventosValida = areaEventosInput.value && areaEventosInput.value.trim() !== '';
         const novedadesValidas = novedadesTextarea.value && novedadesTextarea.value.trim() !== '';
         
+        // Actualizar clases de validación visual
+        if (fechaValida) {
+          fechaInput.classList.remove('invalid');
+        } else {
+          fechaInput.classList.add('invalid');
+        }
+        
+        if (reportadoPorValido) {
+          reportadoPorSelect.classList.remove('invalid');
+        } else {
+          reportadoPorSelect.classList.add('invalid');
+        }
+        
+        if (casoIdValido) {
+          casoIdInput.classList.remove('invalid');
+        } else {
+          casoIdInput.classList.add('invalid');
+        }
+        
+        if (areaEventosValida) {
+          areaEventosInput.classList.remove('invalid');
+        } else {
+          areaEventosInput.classList.add('invalid');
+        }
+        
+        if (novedadesValidas) {
+          novedadesTextarea.classList.remove('invalid');
+        } else {
+          novedadesTextarea.classList.add('invalid');
+        }
+        
         const formularioValido = fechaValida && reportadoPorValido && casoIdValido && areaEventosValida && novedadesValidas;
         
         if (formularioValido) {
@@ -761,18 +830,41 @@
       // Validar cuando cambia la fecha
       fechaInput.addEventListener('change', validateForm);
       fechaInput.addEventListener('input', validateForm);
+      fechaInput.addEventListener('focus', () => {
+        // Quitar borde rojo al hacer foco para mejor UX
+        fechaInput.classList.remove('invalid');
+      });
+      fechaInput.addEventListener('blur', validateForm);
       
       // Validar cuando cambia el Caso ID
       casoIdInput.addEventListener('input', validateForm);
       casoIdInput.addEventListener('change', validateForm);
+      casoIdInput.addEventListener('focus', () => {
+        casoIdInput.classList.remove('invalid');
+      });
+      casoIdInput.addEventListener('blur', validateForm);
       
       // Validar cuando cambia el Área de eventos
       areaEventosInput.addEventListener('input', validateForm);
       areaEventosInput.addEventListener('change', validateForm);
+      areaEventosInput.addEventListener('focus', () => {
+        areaEventosInput.classList.remove('invalid');
+      });
+      areaEventosInput.addEventListener('blur', validateForm);
       
       // Validar cuando cambia Novedades
       novedadesTextarea.addEventListener('input', validateForm);
       novedadesTextarea.addEventListener('change', validateForm);
+      novedadesTextarea.addEventListener('focus', () => {
+        novedadesTextarea.classList.remove('invalid');
+      });
+      novedadesTextarea.addEventListener('blur', validateForm);
+      
+      // Validar cuando cambia Reportado por
+      reportadoPorSelect.addEventListener('focus', () => {
+        reportadoPorSelect.classList.remove('invalid');
+      });
+      reportadoPorSelect.addEventListener('blur', validateForm);
       
       // Validación inicial al cargar la página
       validateForm();
