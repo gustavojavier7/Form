@@ -574,13 +574,13 @@
           </td>
         </tr>
 
-        <!-- Sitio / Reporte ID -->
+        <!-- Sitio / Caso ID -->
         <tr>
           <td class="rowLabel">Sitio</td>
           <td class="value oneline">PLANTA PACHECO</td>
           <td class="rowLabel" style="text-align:center;">Reporte ID</td>
           <td class="value oneline">
-            <input type="text" id="casoId" class="text-input" value="" maxlength="30" placeholder="[Escribir Caso ID]">
+            <input type="text" id="casoId" class="text-input" value="" maxlength="19" placeholder="[Auto-generado]">
           </td>
         </tr>
 
@@ -691,13 +691,28 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Configurar título del input de fecha
+      // ========== DECLARACIÓN DE VARIABLES ==========
       const fechaInput = document.getElementById('fechaEventos');
+      const reportadoPorSelect = document.getElementById('reportadoPor');
+      const reporteGeneradoPorSpan = document.getElementById('reporteGeneradoPor');
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+      const casoIdInput = document.getElementById('casoId');
+      const areaEventosInput = document.getElementById('areaEventos');
+      const novedadesTextarea = document.getElementById('novedadesText');
+      const bulkImageUpload = document.getElementById('bulkImageUpload');
+      const loadedImagesContainer = document.getElementById('loadedImagesContainer');
+      const preservacionSection = document.getElementById('preservacionSection');
+      const calculateHashBtn = document.getElementById('calculateHashBtn');
+      const hashFileInputs = document.getElementById('hashFileInputs');
+      const hashTableBody = document.getElementById('hashTableBody');
+      const cadenaCustodiaContainer = document.getElementById('cadenaCustodiaContainer');
+      
+      let loadedImages = []; // Array para almacenar las imágenes cargadas
+
+      // Configurar título del input de fecha
       fechaInput.title = 'Haz clic para seleccionar una fecha';
 
       // ========== SINCRONIZACIÓN REPORTADO POR ==========
-      const reportadoPorSelect = document.getElementById('reportadoPor');
-      const reporteGeneradoPorSpan = document.getElementById('reporteGeneradoPor');
       
       // Sincronizar cuando cambia la selección
       reportadoPorSelect.addEventListener('change', () => {
@@ -707,11 +722,57 @@
         validateForm(); // Validar al cambiar
       });
 
+      // ========== GENERACIÓN AUTOMÁTICA DE REPORTE ID ==========
+      
+      function generateReporteId() {
+        // Obtener timestamp Unix en milisegundos
+        const timestampMs = Date.now();
+        
+        // Convertir a string y asegurar 16 dígitos
+        let timestampStr = timestampMs.toString();
+        
+        // Si tiene menos de 16 dígitos, rellenar con el timestamp en microsegundos (simulado)
+        if (timestampStr.length < 16) {
+          // Agregar dígitos adicionales basados en performance.now() para mayor precisión
+          const microPrecision = Math.floor((performance.now() % 1) * 1000000).toString().padStart(6, '0');
+          timestampStr = timestampStr + microPrecision.substring(0, 16 - timestampStr.length);
+        }
+        
+        // Tomar exactamente 16 dígitos
+        timestampStr = timestampStr.substring(0, 16);
+        
+        // Formatear como 0000-0000-0000-0000
+        const reporteId = timestampStr.match(/.{1,4}/g).join('-');
+        
+        return reporteId;
+      }
+      
+      // Generar Reporte ID automáticamente al cargar la página
+      if (!casoIdInput.value || casoIdInput.value.trim() === '') {
+        const nuevoReporteId = generateReporteId();
+        casoIdInput.value = nuevoReporteId;
+        console.log('Reporte ID generado automáticamente:', nuevoReporteId);
+        validateForm(); // Validar después de generar
+      }
+      
+      // Botón para regenerar Reporte ID manualmente
+      const regenerarIdBtn = document.createElement('button');
+      regenerarIdBtn.textContent = '🔄';
+      regenerarIdBtn.title = 'Generar nuevo Reporte ID';
+      regenerarIdBtn.className = 'export-pdf-btn';
+      regenerarIdBtn.style.cssText = 'background-color: #6c757d; padding: 4px 8px; font-size: 9pt; margin-left: 5px; display: inline-block; vertical-align: middle;';
+      regenerarIdBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const nuevoReporteId = generateReporteId();
+        casoIdInput.value = nuevoReporteId;
+        console.log('Reporte ID regenerado:', nuevoReporteId);
+        validateForm();
+      });
+      
+      // Insertar el botón junto al input
+      casoIdInput.parentElement.appendChild(regenerarIdBtn);
+
       // ========== VALIDACIÓN DEL FORMULARIO ==========
-      const exportPdfBtn = document.getElementById('exportPdfBtn');
-      const casoIdInput = document.getElementById('casoId');
-      const areaEventosInput = document.getElementById('areaEventos');
-      const novedadesTextarea = document.getElementById('novedadesText');
       
       function validateForm() {
         const fechaValida = fechaInput.value && fechaInput.value.trim() !== '';
@@ -813,9 +874,6 @@
       validateForm();
 
       // ========== MANEJO DE IMÁGENES - CARGA MÚLTIPLE ==========
-      const bulkImageUpload = document.getElementById('bulkImageUpload');
-      const loadedImagesContainer = document.getElementById('loadedImagesContainer');
-      let loadedImages = []; // Array para almacenar las imágenes cargadas
 
       bulkImageUpload.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
@@ -910,7 +968,6 @@
       setupCheckboxGroup('eventosRegistrados');
 
       // Control de visibilidad para la sección de preservación
-      const preservacionSection = document.getElementById('preservacionSection');
       const opcionesEventos = document.querySelectorAll('[data-checkbox-group="eventosRegistrados"]');
       
       opcionesEventos.forEach(opcion => {
@@ -930,10 +987,6 @@
       });
 
       // ========== CÁLCULO DE HASH SHA-256 ==========
-      const calculateHashBtn = document.getElementById('calculateHashBtn');
-      const hashFileInputs = document.getElementById('hashFileInputs');
-      const hashTableBody = document.getElementById('hashTableBody');
-      const cadenaCustodiaContainer = document.getElementById('cadenaCustodiaContainer');
 
       async function computeSHA256(file) {
         const buffer = await file.arrayBuffer();
