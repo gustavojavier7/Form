@@ -720,6 +720,16 @@
         </table>
       </div>
 
+      <div class="image-upload-area" style="border-top: 2px solid #000; margin-top: 20px; padding-top: 20px;">
+        <h3 style="font-size: 12pt; font-weight: 700;">PRESERVACIÓN DE LA EVIDENCIA</h3>
+        <div class="upload-prompt">
+          <p style="font-weight: 700; margin-bottom: 10px;">Cargar archivos para Cadena de Custodia (Video/Fotos):</p>
+          <input type="file" id="hashFileInputs" multiple style="margin-bottom: 10px;">
+          <br>
+          <button id="calculateHashBtn" class="export-pdf-btn" style="background-color: #28a745; margin-top: 10px;">🔒 Calcular Hash SHA-256</button>
+          <p style="font-size: 9pt; color: #666; margin-top: 8px;">*Calcula el hash SHA-256 de todos los archivos de fotografía y video</p>
+        </div>
+      </div>
       <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
     </div>
   </div>
@@ -738,6 +748,19 @@
         </div>
         
         <!-- Contenedor donde se mostrarán las imágenes cargadas -->
+        <div id="cadenaCustodiaContainer" style="margin-bottom: 20px; display: none;">
+          <h3 style="font-size: 11pt; font-weight: 700; border-bottom: 1px solid #000;">CADENA DE CUSTODIA (HASH SHA-256)</h3>
+          <table class="form" id="hashTable" style="font-size: 9pt; margin-top: 10px;">
+            <thead>
+              <tr style="background-color: #f0f0f0;">
+                <th style="width: 40%;">Nombre del Archivo</th>
+                <th style="width: 60%;">Hash SHA-256</th>
+              </tr>
+            </thead>
+            <tbody id="hashTableBody"></tbody>
+          </table>
+        </div>
+        
         <div id="loadedImagesContainer"></div>
       </div>
 
@@ -966,6 +989,45 @@
       setupCheckboxGroup('tipoReporte');
       setupCheckboxGroup('eventosRegistrados');
 
+      // ========== CÁLCULO DE HASH SHA-256 ==========
+      const calculateHashBtn = document.getElementById('calculateHashBtn');
+      const hashFileInputs = document.getElementById('hashFileInputs');
+      const hashTableBody = document.getElementById('hashTableBody');
+      const cadenaCustodiaContainer = document.getElementById('cadenaCustodiaContainer');
+
+      async function computeSHA256(file) {
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      calculateHashBtn.addEventListener('click', async () => {
+        const files = Array.from(hashFileInputs.files);
+        if (files.length === 0) {
+          alert('Por favor, selecciona archivos primero.');
+          return;
+        }
+
+        calculateHashBtn.disabled = true;
+        calculateHashBtn.textContent = '⌛ Calculando...';
+        hashTableBody.innerHTML = '';
+        cadenaCustodiaContainer.style.display = 'block';
+
+        for (const file of files) {
+          const hash = await computeSHA256(file);
+          const row = `<tr>
+            <td style="word-break: break-all;">${file.name}</td>
+            <td style="font-family: monospace; word-break: break-all;">${hash}</td>
+          </tr>`;
+          hashTableBody.insertAdjacentHTML('beforeend', row);
+        }
+
+        calculateHashBtn.disabled = false;
+        calculateHashBtn.textContent = '🔒 Calcular Hash SHA-256';
+        alert('Cálculo de hashes completado e insertado en el reporte.');
+      });
+
       // ========== EXPORTAR A PDF ==========
       exportPdfBtn.addEventListener('click', async () => {
         // Validar antes de exportar
@@ -993,7 +1055,10 @@
           
           exportSection.style.display = 'none';
           removeButtons.forEach(btn => btn.style.display = 'none');
-          if (uploadPrompt) uploadPrompt.style.display = 'none';
+          if (uploadPrompt) {
+            document.querySelectorAll('.upload-prompt').forEach(el => el.style.display = 'none');
+            document.querySelector('.image-upload-area[style*="border-top"]').style.display = 'none';
+          }
           
           // PÁGINA 1: Formulario principal
           const page1Element = document.querySelectorAll('.page')[0];
