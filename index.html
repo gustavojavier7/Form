@@ -918,6 +918,7 @@
           const valor = opcion.dataset.checkboxValue;
           if (valor === 'si') {
             preservacionSection.style.display = 'block';
+            validateForm(); // Revalidar al marcar "sí" para deshabilitar el botón
           } else {
             preservacionSection.style.display = 'none';
             validateForm(); // Revalida al marcar "no"
