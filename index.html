@@ -593,7 +593,7 @@
           <td class="rowLabel" style="text-align:center;">Fecha de eventos</td>
           <td class="dateValueCell">
             <div class="date-input-container">
-              <input type="date" id="fechaEventos" class="date-input" value="2026-01-28">
+              <input type="date" id="fechaEventos" class="date-input" value="">
             </div>
           </td>
         </tr>
@@ -628,7 +628,7 @@
           <td class="value oneline">PLANTA PACHECO</td>
           <td class="rowLabel" style="text-align:center;">Caso ID</td>
           <td class="value oneline">
-            <input type="text" id="casoId" class="text-input" value="CCTV-0004" maxlength="30" placeholder="Ingrese Caso ID">
+            <input type="text" id="casoId" class="text-input" value="" maxlength="30" placeholder="[Escribir Caso ID]">
           </td>
         </tr>
 
@@ -647,7 +647,7 @@
           </td>
           <td class="rowLabel">2.- Área de los eventos:</td>
           <td class="value oneline">
-            <input type="text" id="areaEventos" class="text-input" value="Interior Comedor de planta" maxlength="50" placeholder="Ingrese el área">
+            <input type="text" id="areaEventos" class="text-input" value="" maxlength="50" placeholder="[Escribir Área]">
           </td>
         </tr>
 
@@ -657,9 +657,7 @@
         </tr>
         <tr>
           <td class="bigBox" colspan="4">
-            <textarea id="novedadesText" class="novedades-textarea" rows="10" placeholder="Ingrese las novedades del reporte...">Siendo las 0:13 ingresa al comedor y se retira 0:30
-Siendo 0:50 se dirige nuevamente al comedor y se queda hasta las 2:47 que regresa a su sector
-Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
+            <textarea id="novedadesText" class="novedades-textarea" rows="10" placeholder="[Escriba Novedades]"></textarea>
           </td>
         </tr>
       </table>
@@ -684,11 +682,6 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
         </table>
       </div>
 
-      <!-- Botón de exportar a PDF -->
-      <div class="export-section">
-        <button id="exportPdfBtn" class="export-pdf-btn">📄 Exportar a PDF</button>
-      </div>
-
       <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
     </div>
   </div>
@@ -710,6 +703,11 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
         <div id="loadedImagesContainer"></div>
       </div>
 
+      <!-- Botón de exportar a PDF -->
+      <div class="export-section">
+        <button id="exportPdfBtn" class="export-pdf-btn">📄 Exportar a PDF</button>
+      </div>
+
       <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
     </div>
   </div>
@@ -729,7 +727,55 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
         const selectedValue = reportadoPorSelect.value;
         reporteGeneradoPorSpan.textContent = selectedValue || 'Choose an item.';
         console.log('Reportado por actualizado:', selectedValue);
+        validateForm(); // Validar al cambiar
       });
+
+      // ========== VALIDACIÓN DEL FORMULARIO ==========
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+      const casoIdInput = document.getElementById('casoId');
+      const areaEventosInput = document.getElementById('areaEventos');
+      const novedadesTextarea = document.getElementById('novedadesText');
+      
+      function validateForm() {
+        const fechaValida = fechaInput.value && fechaInput.value.trim() !== '';
+        const reportadoPorValido = reportadoPorSelect.value && reportadoPorSelect.value.trim() !== '';
+        const casoIdValido = casoIdInput.value && casoIdInput.value.trim() !== '';
+        const areaEventosValida = areaEventosInput.value && areaEventosInput.value.trim() !== '';
+        const novedadesValidas = novedadesTextarea.value && novedadesTextarea.value.trim() !== '';
+        
+        const formularioValido = fechaValida && reportadoPorValido && casoIdValido && areaEventosValida && novedadesValidas;
+        
+        if (formularioValido) {
+          exportPdfBtn.disabled = false;
+          exportPdfBtn.style.backgroundColor = '#0066cc';
+          exportPdfBtn.style.cursor = 'pointer';
+        } else {
+          exportPdfBtn.disabled = true;
+          exportPdfBtn.style.backgroundColor = '#cccccc';
+          exportPdfBtn.style.cursor = 'not-allowed';
+        }
+        
+        return formularioValido;
+      }
+      
+      // Validar cuando cambia la fecha
+      fechaInput.addEventListener('change', validateForm);
+      fechaInput.addEventListener('input', validateForm);
+      
+      // Validar cuando cambia el Caso ID
+      casoIdInput.addEventListener('input', validateForm);
+      casoIdInput.addEventListener('change', validateForm);
+      
+      // Validar cuando cambia el Área de eventos
+      areaEventosInput.addEventListener('input', validateForm);
+      areaEventosInput.addEventListener('change', validateForm);
+      
+      // Validar cuando cambia Novedades
+      novedadesTextarea.addEventListener('input', validateForm);
+      novedadesTextarea.addEventListener('change', validateForm);
+      
+      // Validación inicial al cargar la página
+      validateForm();
 
       // ========== MANEJO DE IMÁGENES - CARGA MÚLTIPLE ==========
       const bulkImageUpload = document.getElementById('bulkImageUpload');
@@ -829,9 +875,13 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
       setupCheckboxGroup('eventosRegistrados');
 
       // ========== EXPORTAR A PDF ==========
-      const exportPdfBtn = document.getElementById('exportPdfBtn');
-      
       exportPdfBtn.addEventListener('click', async () => {
+        // Validar antes de exportar
+        if (!validateForm()) {
+          alert('Por favor, complete los campos obligatorios:\n- Reportado por\n- Fecha de eventos\n- Caso ID\n- Área de los eventos\n- Novedades');
+          return;
+        }
+        
         // Deshabilitar el botón mientras se genera el PDF
         exportPdfBtn.disabled = true;
         exportPdfBtn.textContent = '⏳ Generando PDF...';
@@ -903,8 +953,8 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
           console.error('Error al generar PDF:', error);
           alert('Hubo un error al generar el PDF. Por favor, intenta nuevamente.');
         } finally {
-          // Rehabilitar el botón
-          exportPdfBtn.disabled = false;
+          // Rehabilitar el botón solo si la validación pasa
+          validateForm();
           exportPdfBtn.textContent = '📄 Exportar a PDF';
         }
       });
@@ -952,16 +1002,16 @@ Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
         console.log('Datos del formulario:', window.getFormData());
       });
       
-      document.getElementById('areaEventos').addEventListener('change', () => {
-        console.log('Datos del formulario:', window.getFormData());
+      casoIdInput.addEventListener('input', () => {
+        console.log('Caso ID actualizado:', casoIdInput.value);
       });
       
-      document.getElementById('casoId').addEventListener('change', () => {
-        console.log('Datos del formulario:', window.getFormData());
+      areaEventosInput.addEventListener('input', () => {
+        console.log('Área de eventos actualizada:', areaEventosInput.value);
       });
       
-      document.getElementById('novedadesText').addEventListener('change', () => {
-        console.log('Datos del formulario:', window.getFormData());
+      novedadesTextarea.addEventListener('input', () => {
+        console.log('Novedades actualizadas');
       });
     });
   </script>
