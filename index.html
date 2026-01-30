@@ -367,90 +367,6 @@
       background-color: rgba(200, 35, 51, 1);
     }
     
-    /* Grid de imágenes */
-    .imageGrid{
-      width:100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    .imageCell{
-      text-align: center;
-      padding: 8px;
-      width: 33.33%;
-      vertical-align: top;
-    }
-    .imagePlaceholder{
-      width: 100%;
-      height: 120px;
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10pt;
-      color: #777;
-      margin-bottom: 8px;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: background-color 0.2s ease;
-    }
-    
-    .imagePlaceholder:hover{
-      background-color: #f0f0f0;
-      border-color: #999;
-    }
-    
-    .imagePlaceholder.has-image{
-      background: transparent;
-      padding: 0;
-    }
-    
-    .imagePlaceholder img{
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    
-    .imagePlaceholder .placeholder-text{
-      pointer-events: none;
-    }
-    
-    .imagePlaceholder input[type="file"]{
-      display: none;
-    }
-    
-    /* Botón para eliminar imagen */
-    .remove-image-btn{
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 24px;
-      height: 24px;
-      background-color: rgba(220, 53, 69, 0.9);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      line-height: 1;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s ease;
-      z-index: 10;
-    }
-    
-    .remove-image-btn:hover{
-      background-color: rgba(200, 35, 51, 1);
-    }
-    
-    .imagePlaceholder.has-image .remove-image-btn{
-      display: flex;
-    }
-    
     /* Botón exportar PDF */
     .export-section{
       margin-top: 15px;
@@ -484,11 +400,6 @@
     .export-pdf-btn:disabled{
       background-color: #cccccc;
       cursor: not-allowed;
-    }
-    .timeStamp{
-      font-weight: 700;
-      margin-bottom: 4px;
-      font-size: 10pt;
     }
     
     /* Firmas */
@@ -570,7 +481,10 @@
       .loaded-image-remove{
         display: none !important;
       }
-      #bulkImageUpload{
+      #bulkImageUpload, #hashFileInputs{
+        display: none !important;
+      }
+      #calculateHashBtn{
         display: none !important;
       }
       /* Eliminar bordes de validación en impresión */
@@ -720,7 +634,8 @@
         </table>
       </div>
 
-      <div id="preservacionSection" class="image-upload-area" style="border-top: 2px solid #000; margin-top: 20px; padding-top: 20px; display: none;">
+      <!-- Sección de Preservación de Evidencia (condicional) -->
+      <div id="preservacionSection" style="border-top: 2px solid #000; margin-top: 20px; padding-top: 20px; display: none;">
         <h3 style="font-size: 12pt; font-weight: 700;">PRESERVACIÓN DE LA EVIDENCIA</h3>
         <div class="upload-prompt">
           <p style="font-weight: 700; margin-bottom: 10px;">Cargar archivos para Cadena de Custodia (Video/Fotos):</p>
@@ -729,7 +644,21 @@
           <button id="calculateHashBtn" class="export-pdf-btn" style="background-color: #28a745; margin-top: 10px;">🔒 Calcular Hash SHA-256</button>
           <p style="font-size: 9pt; color: #666; margin-top: 8px;">*Calcula el hash SHA-256 de todos los archivos de fotografía y video</p>
         </div>
+        
+        <div id="cadenaCustodiaContainer" style="margin-top: 20px; display: none;">
+          <h3 style="font-size: 11pt; font-weight: 700; border-bottom: 1px solid #000; padding-bottom: 5px;">CADENA DE CUSTODIA (HASH SHA-256)</h3>
+          <table class="form" id="hashTable" style="font-size: 9pt; margin-top: 10px;">
+            <thead>
+              <tr style="background-color: #f0f0f0;">
+                <th style="width: 40%;">Nombre del Archivo</th>
+                <th style="width: 60%;">Hash SHA-256</th>
+              </tr>
+            </thead>
+            <tbody id="hashTableBody"></tbody>
+          </table>
+        </div>
       </div>
+
       <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
     </div>
   </div>
@@ -748,19 +677,6 @@
         </div>
         
         <!-- Contenedor donde se mostrarán las imágenes cargadas -->
-        <div id="cadenaCustodiaContainer" style="margin-bottom: 20px; display: none;">
-          <h3 style="font-size: 11pt; font-weight: 700; border-bottom: 1px solid #000;">CADENA DE CUSTODIA (HASH SHA-256)</h3>
-          <table class="form" id="hashTable" style="font-size: 9pt; margin-top: 10px;">
-            <thead>
-              <tr style="background-color: #f0f0f0;">
-                <th style="width: 40%;">Nombre del Archivo</th>
-                <th style="width: 60%;">Hash SHA-256</th>
-              </tr>
-            </thead>
-            <tbody id="hashTableBody"></tbody>
-          </table>
-        </div>
-        
         <div id="loadedImagesContainer"></div>
       </div>
 
@@ -835,7 +751,7 @@
           novedadesTextarea.classList.add('invalid');
         }
         
-        // Nueva validación para Cadena de Custodia
+        // Validación para Cadena de Custodia
         const siPreservarChecked = document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked')?.parentElement.dataset.checkboxValue === 'si';
         const hashesCalculados = document.getElementById('hashTableBody').children.length > 0;
         const preservacionValida = !siPreservarChecked || (siPreservarChecked && hashesCalculados);
@@ -859,7 +775,6 @@
       fechaInput.addEventListener('change', validateForm);
       fechaInput.addEventListener('input', validateForm);
       fechaInput.addEventListener('focus', () => {
-        // Quitar borde rojo al hacer foco para mejor UX
         fechaInput.classList.remove('invalid');
       });
       fechaInput.addEventListener('blur', validateForm);
@@ -1052,13 +967,13 @@
         validateForm(); // Revalida para habilitar el botón de exportación
         alert('Cálculo de hashes completado e insertado en el reporte.');
       });
-      });
 
       // ========== EXPORTAR A PDF ==========
       exportPdfBtn.addEventListener('click', async () => {
         // Validar antes de exportar
         if (!validateForm()) {
-          alert('Por favor, complete los campos obligatorios:\n- Reportado por\n- Fecha de eventos\n- Caso ID\n- Área de los eventos\n- Novedades');
+          alert('Por favor, complete los campos obligatorios:\n- Reportado por\n- Fecha de eventos\n- Caso ID\n- Área de los eventos\n- Novedades\n\n' + 
+                (document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked')?.parentElement.dataset.checkboxValue === 'si' && document.getElementById('hashTableBody').children.length === 0 ? '- Calcule los hashes SHA-256 para la cadena de custodia' : ''));
           return;
         }
         
@@ -1074,17 +989,20 @@
             format: 'a4'
           });
 
-          // Ocultar temporalmente el botón de exportar y los botones de eliminar
+          // Ocultar temporalmente elementos de UI
           const exportSection = document.querySelector('.export-section');
           const removeButtons = document.querySelectorAll('.loaded-image-remove');
-          const uploadPrompt = document.querySelector('.upload-prompt');
+          const uploadPrompts = document.querySelectorAll('.upload-prompt');
+          const hashBtn = document.getElementById('calculateHashBtn');
+          const hashInput = document.getElementById('hashFileInputs');
+          const bulkInput = document.getElementById('bulkImageUpload');
           
           exportSection.style.display = 'none';
           removeButtons.forEach(btn => btn.style.display = 'none');
-          if (uploadPrompt) {
-            document.querySelectorAll('.upload-prompt').forEach(el => el.style.display = 'none');
-            document.querySelector('.image-upload-area[style*="border-top"]').style.display = 'none';
-          }
+          uploadPrompts.forEach(el => el.style.display = 'none');
+          hashBtn.style.display = 'none';
+          hashInput.style.display = 'none';
+          bulkInput.style.display = 'none';
           
           // PÁGINA 1: Formulario principal
           const page1Element = document.querySelectorAll('.page')[0];
@@ -1159,7 +1077,7 @@
           }
           
           // Generar nombre de archivo
-          const casoId = document.getElementById('casoId').value || 'CCTV';
+          const casoId = casoIdInput.value || 'CCTV';
           const fecha = fechaInput.value || new Date().toISOString().split('T')[0];
           const fileName = `Reporte_CCTV_${casoId}_${fecha}.pdf`;
           
@@ -1172,7 +1090,10 @@
           // Mostrar nuevamente los elementos ocultos
           exportSection.style.display = 'block';
           removeButtons.forEach(btn => btn.style.display = '');
-          if (uploadPrompt) uploadPrompt.style.display = '';
+          uploadPrompts.forEach(el => el.style.display = '');
+          hashBtn.style.display = '';
+          hashInput.style.display = '';
+          bulkInput.style.display = '';
           
         } catch (error) {
           console.error('Error al generar PDF:', error);
@@ -1192,9 +1113,9 @@
           tipoReporte: null,
           eventosRegistrados: null,
           sitio: 'PLANTA PACHECO',
-          casoId: document.getElementById('casoId').value,
-          areaEventos: document.getElementById('areaEventos').value,
-          novedades: document.getElementById('novedadesText').value,
+          casoId: casoIdInput.value,
+          areaEventos: areaEventosInput.value,
+          novedades: novedadesTextarea.value,
           imagenes: loadedImages.map((img, index) => ({
             id: img.id,
             fileName: img.fileName,
