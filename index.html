@@ -205,6 +205,11 @@
       padding: 0;
       line-height: 1.15;
       
+      /* Centrado vertical */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
       appearance: none;
       -webkit-appearance: none;
       
@@ -709,8 +714,49 @@
       
       let loadedImages = []; // Array para almacenar las imágenes cargadas
 
+      // ========== FORMATEO DE FECHA ==========
+      // Crear un span para mostrar la fecha formateada
+      const fechaDisplaySpan = document.createElement('span');
+      fechaDisplaySpan.style.cssText = 'display: flex; align-items: center; justify-content: center; height: 100%; width: 100%;';
+      fechaDisplaySpan.textContent = '';
+      
+      // Función para formatear fecha de YYYY-MM-DD a DD-MM-YYYY
+      function formatearFecha(fechaISO) {
+        if (!fechaISO) return '';
+        const partes = fechaISO.split('-');
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+      }
+      
+      // Función para convertir fecha de DD-MM-YYYY a YYYY-MM-DD
+      function parsearFecha(fechaFormateada) {
+        if (!fechaFormateada) return '';
+        const partes = fechaFormateada.split('-');
+        return `${partes[2]}-${partes[1]}-${partes[0]}`;
+      }
+      
+      // Ocultar el input nativo y mostrar el span formateado
+      fechaInput.addEventListener('change', () => {
+        const fechaFormateada = formatearFecha(fechaInput.value);
+        fechaDisplaySpan.textContent = fechaFormateada;
+      });
+      
+      // Insertar el span en el contenedor
+      const dateContainer = fechaInput.parentElement;
+      dateContainer.appendChild(fechaDisplaySpan);
+      
+      // Ocultar el input visualmente pero mantenerlo funcional
+      fechaInput.style.opacity = '0';
+      fechaInput.style.position = 'absolute';
+      
+      // Al hacer click en el span, activar el input de fecha
+      fechaDisplaySpan.addEventListener('click', () => {
+        fechaInput.showPicker ? fechaInput.showPicker() : fechaInput.click();
+      });
+      
       // Configurar título del input de fecha
       fechaInput.title = 'Haz clic para seleccionar una fecha';
+      fechaDisplaySpan.title = 'Haz clic para seleccionar una fecha';
+      fechaDisplaySpan.style.cursor = 'pointer';
 
       // ========== SINCRONIZACIÓN REPORTADO POR ==========
       
@@ -784,8 +830,13 @@
         // Actualizar clases de validación visual
         if (fechaValida) {
           fechaInput.classList.remove('invalid');
+          fechaDisplaySpan.style.border = 'none';
+          fechaDisplaySpan.style.backgroundColor = 'transparent';
         } else {
           fechaInput.classList.add('invalid');
+          fechaDisplaySpan.style.border = '2px solid #dc3545';
+          fechaDisplaySpan.style.backgroundColor = '#fff5f5';
+          fechaDisplaySpan.style.padding = '2px';
         }
         
         if (reportadoPorValido) {
@@ -833,12 +884,19 @@
       }
       
       // Validar cuando cambia la fecha
-      fechaInput.addEventListener('change', validateForm);
-      fechaInput.addEventListener('input', validateForm);
+      fechaInput.addEventListener('change', () => {
+        validateForm();
+      });
+      fechaInput.addEventListener('input', () => {
+        validateForm();
+      });
       fechaInput.addEventListener('focus', () => {
         fechaInput.classList.remove('invalid');
+        fechaDisplaySpan.style.border = 'none';
       });
-      fechaInput.addEventListener('blur', validateForm);
+      fechaInput.addEventListener('blur', () => {
+        validateForm();
+      });
       
       // Validar cuando cambia el Caso ID
       casoIdInput.addEventListener('input', validateForm);
