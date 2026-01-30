@@ -1004,26 +1004,67 @@
             backgroundColor: '#ffffff'
           });
           
-          const imgWidth = 210; // A4 width in mm
-          const imgHeight1 = (canvas1.height * imgWidth) / canvas1.width;
+          const pageWidth = 210; // A4 width in mm
+          const pageHeight = 297; // A4 height in mm
+          const imgHeight1 = (canvas1.height * pageWidth) / canvas1.width;
           const imgData1 = canvas1.toDataURL('image/png');
-          pdf.addImage(imgData1, 'PNG', 0, 0, imgWidth, imgHeight1);
+          pdf.addImage(imgData1, 'PNG', 0, 0, pageWidth, imgHeight1);
           
-          // PÁGINA 2: Imágenes (solo si hay imágenes cargadas)
+          // AGREGAR IMÁGENES: Una página por imagen
           if (loadedImages.length > 0) {
-            pdf.addPage();
-            
-            const page2Element = document.querySelectorAll('.page')[1];
-            const canvas2 = await html2canvas(page2Element, {
-              scale: 2,
-              useCORS: true,
-              logging: false,
-              backgroundColor: '#ffffff'
-            });
-            
-            const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
-            const imgData2 = canvas2.toDataURL('image/png');
-            pdf.addImage(imgData2, 'PNG', 0, 0, imgWidth, imgHeight2);
+            for (let i = 0; i < loadedImages.length; i++) {
+              const imageData = loadedImages[i];
+              
+              // Agregar nueva página
+              pdf.addPage();
+              
+              // Crear una imagen temporal para obtener dimensiones reales
+              const img = new Image();
+              img.src = imageData.src;
+              
+              await new Promise((resolve) => {
+                img.onload = () => {
+                  const imgWidth = img.width;
+                  const imgHeight = img.height;
+                  const imgAspectRatio = imgWidth / imgHeight;
+                  
+                  // Márgenes de seguridad
+                  const marginH = 10; // margen horizontal
+                  const marginV = 10; // margen vertical
+                  const maxWidth = pageWidth - (2 * marginH);
+                  const maxHeight = pageHeight - (2 * marginV);
+                  
+                  let finalWidth, finalHeight;
+                  
+                  // Calcular dimensiones para ajustar dentro de la página
+                  if (imgAspectRatio > (maxWidth / maxHeight)) {
+                    // La imagen es más ancha que alta (landscape)
+                    finalWidth = maxWidth;
+                    finalHeight = maxWidth / imgAspectRatio;
+                  } else {
+                    // La imagen es más alta que ancha (portrait)
+                    finalHeight = maxHeight;
+                    finalWidth = maxHeight * imgAspectRatio;
+                  }
+                  
+                  // Centrar la imagen en la página
+                  const xPos = (pageWidth - finalWidth) / 2;
+                  const yPos = marginV;
+                  
+                  // Agregar la imagen al PDF
+                  pdf.addImage(imageData.src, 'JPEG', xPos, yPos, finalWidth, finalHeight);
+                  
+                  // Agregar pie de foto
+                  pdf.setFontSize(10);
+                  pdf.setFont('helvetica', 'normal');
+                  const captionText = `Imagen ${i + 1}: ${imageData.fileName}`;
+                  const captionY = yPos + finalHeight + 5;
+                  pdf.text(captionText, pageWidth / 2, captionY, { align: 'center' });
+                  
+                  resolve();
+                };
+              });
+            }
           }
           
           // Generar nombre de archivo
@@ -1035,6 +1076,7 @@
           pdf.save(fileName);
           
           console.log('PDF generado exitosamente:', fileName);
+          console.log(`Total de páginas: ${1 + loadedImages.length}`);
           
           // Mostrar nuevamente los elementos ocultos
           exportSection.style.display = 'block';
