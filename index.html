@@ -43,7 +43,7 @@
     }
 
     /* Alturas fijas para consistencia */
-    .rH1 td{ height: 78px; } /* Ajustado para 3 líneas de metadata */
+    .rH1 td{ height: 78px; }
     
     /* Fila compacta */
     .rowCompact td{ height: 26px; }
@@ -80,9 +80,9 @@
     }
     .metaTable td{
       border: none;
-      padding: 1px 4px;  /* Ajustado */
+      padding: 1px 4px;
       text-align: left;
-      height: auto;      /* Ajustado: de 22px a auto */
+      height: auto;
     }
     .metaLabel{
       font-weight: 700;
@@ -154,8 +154,8 @@
       color: inherit;
       
       text-align: center;
-      padding: 0;           /* clave: evita engrosamiento */
-      line-height: 1.15;    /* igual a la tabla */
+      padding: 0;
+      line-height: 1.15;
       
       appearance: none;
       -webkit-appearance: none;
@@ -169,7 +169,7 @@
       background-color: #f0f8ff;
     }
     
-    /* Checkboxes */
+    /* Checkboxes - AHORA INTERACTIVOS */
     .cb{
       display:inline-block;
       width: 12px;
@@ -179,7 +179,14 @@
       margin-right: 8px;
       vertical-align: middle;
       position: relative;
+      cursor: pointer;
+      transition: background-color 0.1s ease;
     }
+    
+    .cb:hover{
+      background-color: #f0f0f0;
+    }
+    
     .cb.checked::after{
       content:"X";
       position:absolute;
@@ -190,7 +197,7 @@
       font-weight: bold;
     }
     
-    /* Opciones en línea - ahora en una sola fila */
+    /* Opciones en línea */
     .opts{
       display: flex;
       gap: 15px;
@@ -199,6 +206,8 @@
     }
     .opts > span{
       white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
     }
     .opts-spread{
       justify-content: space-between;
@@ -309,6 +318,12 @@
         appearance: none;
         -webkit-appearance: none;
       }
+      .cb{
+        cursor: default;
+      }
+      .cb:hover{
+        background-color: transparent;
+      }
     }
   </style>
 </head>
@@ -325,7 +340,7 @@
           <col style="width:25%">
         </colgroup>
         
-        <!-- Encabezado (UNA SOLA FILA sin rowspan) -->
+        <!-- Encabezado -->
         <tr class="rH1">
           <td class="logoCell">
             <div class="logoPlaceholder">Firma digital / Logo</div>
@@ -340,7 +355,7 @@
           </td>
         </tr>
 
-        <!-- Reportado por y Fecha de eventos en la MISMA línea -->
+        <!-- Reportado por y Fecha de eventos -->
         <tr class="rowCompact">
           <td class="rowLabel">Reportado por</td>
           <td class="value">
@@ -360,16 +375,26 @@
           </td>
         </tr>
 
-        <!-- Tipo de Reporte - AHORA EN UNA SOLA LÍNEA -->
+        <!-- Tipo de Reporte - CHECKBOXES INTERACTIVOS -->
         <tr>
           <td class="rowLabel">Tipo de Reporte</td>
           <td class="value" colspan="3">
             <div class="opts opts-spread">
-              <span>Caso <span class="cb"></span></span>
-              <span>Monitoreo <span class="cb"></span></span>
-              <span>Novedades <span class="cb checked"></span></span>
-              <span>Investigación <span class="cb"></span></span>
-              <span>Auditoría <span class="cb"></span></span>
+              <span data-checkbox-group="tipoReporte" data-checkbox-value="caso">
+                Caso <span class="cb" data-checkbox="tipoReporte-caso"></span>
+              </span>
+              <span data-checkbox-group="tipoReporte" data-checkbox-value="monitoreo">
+                Monitoreo <span class="cb" data-checkbox="tipoReporte-monitoreo"></span>
+              </span>
+              <span data-checkbox-group="tipoReporte" data-checkbox-value="novedades">
+                Novedades <span class="cb checked" data-checkbox="tipoReporte-novedades"></span>
+              </span>
+              <span data-checkbox-group="tipoReporte" data-checkbox-value="investigacion">
+                Investigación <span class="cb" data-checkbox="tipoReporte-investigacion"></span>
+              </span>
+              <span data-checkbox-group="tipoReporte" data-checkbox-value="auditoria">
+                Auditoría <span class="cb" data-checkbox="tipoReporte-auditoria"></span>
+              </span>
             </div>
           </td>
         </tr>
@@ -379,16 +404,20 @@
           <td class="rowLabel">Sitio</td>
           <td class="value oneline">PLANTA PACHECO</td>
           <td class="rowLabel" style="text-align:center;">Caso ID</td>
-          <td class="value oneline">CCTV-0004</td> <!-- Agregado placeholder -->
+          <td class="value oneline">CCTV-0004</td>
         </tr>
 
-        <!-- Eventos registrados / Área -->
+        <!-- Eventos registrados / Área - CHECKBOXES INTERACTIVOS -->
         <tr>
           <td class="rowLabel">1.- ¿Eventos Registrados?:</td>
           <td class="value">
             <div class="opts">
-              <span>Sí <span class="cb checked"></span></span>
-              <span>No <span class="cb"></span></span>
+              <span data-checkbox-group="eventosRegistrados" data-checkbox-value="si">
+                Sí <span class="cb checked" data-checkbox="eventosRegistrados-si"></span>
+              </span>
+              <span data-checkbox-group="eventosRegistrados" data-checkbox-value="no">
+                No <span class="cb" data-checkbox="eventosRegistrados-no"></span>
+              </span>
             </div>
           </td>
           <td class="rowLabel">2.- Área de los eventos:</td>
@@ -407,7 +436,7 @@
               <li>Siendo las 3:07 se dirige al comedor hasta las 3:37</li>
             </ul>
             
-            <!-- Grid de imágenes como en el Word original -->
+            <!-- Grid de imágenes -->
             <table class="imageGrid">
               <!-- Primera fila de imágenes -->
               <tr>
@@ -485,8 +514,75 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Configurar título del input de fecha
       const fechaInput = document.getElementById('fechaEventos');
       fechaInput.title = 'Haz clic para seleccionar una fecha';
+
+      // Función para manejar checkboxes con exclusión mutua
+      function setupCheckboxGroup(groupName) {
+        const groupItems = document.querySelectorAll(`[data-checkbox-group="${groupName}"]`);
+        
+        groupItems.forEach(item => {
+          const checkbox = item.querySelector('.cb');
+          const value = item.dataset.checkboxValue;
+          
+          // Hacer clickeable tanto el span como el checkbox
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Desmarcar todos los checkboxes del grupo
+            groupItems.forEach(otherItem => {
+              otherItem.querySelector('.cb').classList.remove('checked');
+            });
+            
+            // Marcar el checkbox clickeado
+            checkbox.classList.add('checked');
+            
+            // Log para debugging (opcional)
+            console.log(`${groupName}: ${value} seleccionado`);
+          });
+        });
+      }
+
+      // Inicializar grupos de checkboxes
+      setupCheckboxGroup('tipoReporte');
+      setupCheckboxGroup('eventosRegistrados');
+
+      // Función para obtener valores seleccionados (útil para exportar datos)
+      window.getFormData = function() {
+        const data = {
+          reportadoPor: document.querySelector('.select-field').value,
+          fechaEventos: document.getElementById('fechaEventos').value,
+          tipoReporte: null,
+          eventosRegistrados: null,
+          sitio: 'PLANTA PACHECO',
+          casoId: 'CCTV-0004',
+          areaEventos: 'Interior Comedor de planta'
+        };
+
+        // Obtener tipo de reporte seleccionado
+        const tipoReporteChecked = document.querySelector('[data-checkbox-group="tipoReporte"] .cb.checked');
+        if (tipoReporteChecked) {
+          data.tipoReporte = tipoReporteChecked.parentElement.dataset.checkboxValue;
+        }
+
+        // Obtener eventos registrados
+        const eventosChecked = document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked');
+        if (eventosChecked) {
+          data.eventosRegistrados = eventosChecked.parentElement.dataset.checkboxValue;
+        }
+
+        return data;
+      };
+
+      // Para testing - mostrar datos en consola al cambiar valores
+      document.querySelector('.select-field').addEventListener('change', () => {
+        console.log('Datos del formulario:', window.getFormData());
+      });
+
+      fechaInput.addEventListener('change', () => {
+        console.log('Datos del formulario:', window.getFormData());
+      });
     });
   </script>
 </body>
