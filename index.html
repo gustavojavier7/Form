@@ -835,7 +835,12 @@
           novedadesTextarea.classList.add('invalid');
         }
         
-        const formularioValido = fechaValida && reportadoPorValido && casoIdValido && areaEventosValida && novedadesValidas;
+        // Nueva validación para Cadena de Custodia
+        const siPreservarChecked = document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked')?.parentElement.dataset.checkboxValue === 'si';
+        const hashesCalculados = document.getElementById('hashTableBody').children.length > 0;
+        const preservacionValida = !siPreservarChecked || (siPreservarChecked && hashesCalculados);
+
+        const formularioValido = fechaValida && reportadoPorValido && casoIdValido && areaEventosValida && novedadesValidas && preservacionValida;
         
         if (formularioValido) {
           exportPdfBtn.disabled = false;
@@ -1000,6 +1005,7 @@
             preservacionSection.style.display = 'block';
           } else {
             preservacionSection.style.display = 'none';
+            validateForm(); // Revalida al marcar "no"
             // Opcional: limpiar la tabla de hashes si se marca "no"
             document.getElementById('hashTableBody').innerHTML = '';
             document.getElementById('cadenaCustodiaContainer').style.display = 'none';
@@ -1043,7 +1049,9 @@
 
         calculateHashBtn.disabled = false;
         calculateHashBtn.textContent = '🔒 Calcular Hash SHA-256';
+        validateForm(); // Revalida para habilitar el botón de exportación
         alert('Cálculo de hashes completado e insertado en el reporte.');
+      });
       });
 
       // ========== EXPORTAR A PDF ==========
