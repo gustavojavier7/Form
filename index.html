@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reporte CCTV – Formato Planilla</title>
+  <style>
+    /* --- Configuración general Word-like --- */
+    :root{
+      --ink:#000;
+      --grid:#000;
+    }
+    body{
+      margin:0;
+      background:#fff;
+      color:var(--ink);
+      font-family: Calibri, Arial, sans-serif;
+      font-size: 11pt;
+    }
+    .page{
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10mm auto;
+      padding: 0;
+      box-sizing: border-box;
+      border: 1px solid #000;
+    }
+    .page-content{
+      padding: 12mm;
+    }
+
+    /* --- Tabla principal --- */
+    table.form{
+      width:100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    table.form td, table.form th{
+      border: 1px solid var(--grid);
+      padding: 4px 6px;
+      vertical-align: middle;
+      line-height: 1.15;
+    }
+
+    /* Alturas fijas para consistencia */
+    .rH1 td{ height: 78px; } /* Ajustado para 3 líneas de metadata */
+    
+    /* Fila compacta */
+    .rowCompact td{ height: 26px; }
+    
+    /* Encabezado complejo */
+    .logoCell{
+      text-align: left;
+      vertical-align: middle;
+    }
+    .logoPlaceholder{
+      width: 100%;
+      height: 40px;
+      border: 1px dashed #999;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9pt;
+      color: #666;
+    }
+    .titleCell{
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-size: 14pt;
+    }
+    .metaCell{
+      text-align: center;
+      vertical-align: middle;
+    }
+    .metaTable{
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .metaTable td{
+      border: none;
+      padding: 1px 4px;  /* Ajustado */
+      text-align: left;
+      height: auto;      /* Ajustado: de 22px a auto */
+    }
+    .metaLabel{
+      font-weight: 700;
+      width: 40%;
+    }
+    .metaValue{
+      font-weight: 400;
+      width: 60%;
+    }
+    
+    /* Labels y valores */
+    .rowLabel{
+      font-weight: 700;
+    }
+    .value{
+      font-weight: 400;
+    }
+    
+    /* Select field estilo Word */
+    .select-field{
+      width: 100%;
+      border: none;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      padding: 0;
+      line-height: 1.15;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    
+    .select-field:focus{
+      outline: none;
+      background-color: #f0f8ff;
+    }
+    
+    /* Protección contra wrap */
+    .oneline{
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Celda fecha: sin padding extra */
+    .dateValueCell{
+      text-align: center;
+      padding: 0 !important;
+    }
+    
+    /* Contenedor simple: no debe sumar altura */
+    .date-input-container{
+      width: 100%;
+      height: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    
+    /* Input date "Word-like" */
+    .date-input{
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      
+      border: 0;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      
+      text-align: center;
+      padding: 0;           /* clave: evita engrosamiento */
+      line-height: 1.15;    /* igual a la tabla */
+      
+      appearance: none;
+      -webkit-appearance: none;
+      
+      cursor: pointer;
+    }
+    
+    /* Solo un highlight suave al foco */
+    .date-input:focus{
+      outline: none;
+      background-color: #f0f8ff;
+    }
+    
+    /* Checkboxes */
+    .cb{
+      display:inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid #000;
+      margin-left: 4px;
+      margin-right: 8px;
+      vertical-align: middle;
+      position: relative;
+    }
+    .cb.checked::after{
+      content:"X";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%, -50%);
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
+    /* Opciones en línea - ahora en una sola fila */
+    .opts{
+      display: flex;
+      gap: 15px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+    .opts > span{
+      white-space: nowrap;
+    }
+    .opts-spread{
+      justify-content: space-between;
+      gap: 0;
+    }
+    
+    /* Sección Novedades */
+    .sectionTitle{
+      font-weight: 700;
+      background-color: #f0f0f0;
+      padding: 6px !important;
+    }
+    .bigBox{
+      vertical-align: top !important;
+      padding: 8px !important;
+    }
+    .bigBox ul{
+      margin: 4px 0 0 20px;
+      padding:0;
+    }
+    .bigBox li{
+      margin: 6px 0;
+    }
+    
+    /* Grid de imágenes */
+    .imageGrid{
+      width:100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .imageCell{
+      text-align: center;
+      padding: 8px;
+      width: 33.33%;
+      vertical-align: top;
+    }
+    .imagePlaceholder{
+      width: 100%;
+      height: 120px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10pt;
+      color: #777;
+      margin-bottom: 8px;
+    }
+    .timeStamp{
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 10pt;
+    }
+    
+    /* Firmas */
+    .signatureSection{
+      margin-top: 20px;
+      border-top: 2px solid #000;
+      padding-top: 10px;
+    }
+    .signatureTable{
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .signatureCell{
+      padding: 10px;
+      vertical-align: top;
+      width: 50%;
+    }
+    .signatureLine{
+      border-top: 1px solid #000;
+      margin-top: 40px;
+      padding-top: 4px;
+      font-size: 10pt;
+      text-align: center;
+    }
+    
+    /* Pie */
+    .footerNote{
+      margin-top: 15mm;
+      font-size: 9pt;
+      text-align: center;
+      border-top: 1px solid #ccc;
+      padding-top: 5px;
+    }
+    
+    /* Impresión */
+    @media print{
+      .page{
+        margin: 0;
+        border: none;
+      }
+      body{
+        background:#fff;
+      }
+      .logoPlaceholder,
+      .imagePlaceholder{
+        border: 1px solid #ddd;
+      }
+      .date-input {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .date-input::-webkit-calendar-picker-indicator {
+        display: none;
+      }
+      .select-field{
+        appearance: none;
+        -webkit-appearance: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="page-content">
+      <table class="form" aria-label="Reporte de CCTV">
+        <!-- Colgroup para estabilizar columnas -->
+        <colgroup>
+          <col style="width:20%">
+          <col style="width:40%">
+          <col style="width:15%">
+          <col style="width:25%">
+        </colgroup>
+        
+        <!-- Encabezado (UNA SOLA FILA sin rowspan) -->
+        <tr class="rH1">
+          <td class="logoCell">
+            <div class="logoPlaceholder">Firma digital / Logo</div>
+          </td>
+          <td class="titleCell">REPORTE DE CCTV</td>
+          <td class="metaCell" colspan="2">
+            <table class="metaTable">
+              <tr><td class="metaLabel">Código</td><td class="metaValue">RE PAC PO GS 4.4.6 31-01</td></tr>
+              <tr><td class="metaLabel">Fecha del formulario</td><td class="metaValue">19-03-2018</td></tr>
+              <tr><td class="metaLabel">Revisión</td><td class="metaValue">09</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Reportado por y Fecha de eventos en la MISMA línea -->
+        <tr class="rowCompact">
+          <td class="rowLabel">Reportado por</td>
+          <td class="value">
+            <select class="select-field">
+              <option value="" selected disabled>Choose an item.</option>
+              <option>G. López</option>
+              <option>E. Sosa</option>
+              <option>J. Castilla</option>
+              <option>J. Martín</option>
+            </select>
+          </td>
+          <td class="rowLabel" style="text-align:center;">Fecha de eventos</td>
+          <td class="dateValueCell">
+            <div class="date-input-container">
+              <input type="date" id="fechaEventos" class="date-input" value="2026-01-28">
+            </div>
+          </td>
+        </tr>
+
+        <!-- Tipo de Reporte - AHORA EN UNA SOLA LÍNEA -->
+        <tr>
+          <td class="rowLabel">Tipo de Reporte</td>
+          <td class="value" colspan="3">
+            <div class="opts opts-spread">
+              <span>Caso <span class="cb"></span></span>
+              <span>Monitoreo <span class="cb"></span></span>
+              <span>Novedades <span class="cb checked"></span></span>
+              <span>Investigación <span class="cb"></span></span>
+              <span>Auditoría <span class="cb"></span></span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Sitio / Caso ID -->
+        <tr>
+          <td class="rowLabel">Sitio</td>
+          <td class="value oneline">PLANTA PACHECO</td>
+          <td class="rowLabel" style="text-align:center;">Caso ID</td>
+          <td class="value oneline">CCTV-0004</td> <!-- Agregado placeholder -->
+        </tr>
+
+        <!-- Eventos registrados / Área -->
+        <tr>
+          <td class="rowLabel">1.- ¿Eventos Registrados?:</td>
+          <td class="value">
+            <div class="opts">
+              <span>Sí <span class="cb checked"></span></span>
+              <span>No <span class="cb"></span></span>
+            </div>
+          </td>
+          <td class="rowLabel">2.- Área de los eventos:</td>
+          <td class="value oneline">Interior Comedor de planta</td>
+        </tr>
+
+        <!-- Novedades -->
+        <tr>
+          <td class="sectionTitle" colspan="4">4.- Novedades:</td>
+        </tr>
+        <tr>
+          <td class="bigBox" colspan="4">
+            <ul>
+              <li>Siendo las 0:13 ingresa al comedor y se retira 0:30</li>
+              <li>Siendo 0:50 se dirige nuevamente al comedor y se queda hasta las 2:47 que regresa a su sector</li>
+              <li>Siendo las 3:07 se dirige al comedor hasta las 3:37</li>
+            </ul>
+            
+            <!-- Grid de imágenes como en el Word original -->
+            <table class="imageGrid">
+              <!-- Primera fila de imágenes -->
+              <tr>
+                <td class="imageCell">
+                  <div class="timeStamp">0:13 Ingresa comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">0:17 continua en el comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">0:30 regresa a su sector</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+              </tr>
+              <!-- Segunda fila de imágenes -->
+              <tr>
+                <td class="imageCell">
+                  <div class="timeStamp">0:50 se dirige al comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">1:23 en el comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">2:47 regresa a su sector</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+              </tr>
+              <!-- Tercera fila de imágenes -->
+              <tr>
+                <td class="imageCell">
+                  <div class="timeStamp">3:07 se dirige al comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">3:20 se encuentra en el comedor</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+                <td class="imageCell">
+                  <div class="timeStamp">3:37 regresa a su sector</div>
+                  <div class="imagePlaceholder">Imagen CCTV</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Sección de firmas -->
+      <div class="signatureSection">
+        <table class="signatureTable">
+          <tr>
+            <td class="signatureCell">
+              <div class="signatureLine">
+                Reporte generado por<br>
+                Choose an item.
+              </div>
+            </td>
+            <td class="signatureCell">
+              <div class="signatureLine">
+                Reporte revisado por<br>
+                G. LOPEZ
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const fechaInput = document.getElementById('fechaEventos');
+      fechaInput.title = 'Haz clic para seleccionar una fecha';
+    });
+  </script>
+</body>
+</html>
