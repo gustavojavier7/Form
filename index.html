@@ -246,12 +246,99 @@
       vertical-align: top !important;
       padding: 8px !important;
     }
-    .bigBox ul{
-      margin: 4px 0 0 20px;
-      padding:0;
+    
+    /* Textarea para novedades */
+    .novedades-textarea{
+      width: 100%;
+      min-height: 150px;
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-family: Calibri, Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      resize: vertical;
+      box-sizing: border-box;
+      background-color: #fff;
     }
-    .bigBox li{
-      margin: 6px 0;
+    
+    .novedades-textarea:focus{
+      outline: none;
+      border-color: #0066cc;
+      background-color: #f0f8ff;
+    }
+    
+    /* Sección de carga de imágenes - Segunda página */
+    .image-upload-area{
+      padding: 15px;
+    }
+    
+    .upload-prompt{
+      border: 2px dashed #999;
+      padding: 20px;
+      text-align: center;
+      background-color: #f9f9f9;
+      margin-bottom: 20px;
+    }
+    
+    #bulkImageUpload{
+      padding: 8px;
+      font-size: 10pt;
+      cursor: pointer;
+    }
+    
+    /* Contenedor de imágenes cargadas */
+    #loadedImagesContainer{
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    
+    .loaded-image-item{
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #fff;
+      position: relative;
+      page-break-inside: avoid;
+    }
+    
+    .loaded-image-item img{
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid #ddd;
+    }
+    
+    .loaded-image-caption{
+      margin-top: 8px;
+      font-size: 10pt;
+      color: #333;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .loaded-image-remove{
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 28px;
+      height: 28px;
+      background-color: rgba(220, 53, 69, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+      z-index: 10;
+    }
+    
+    .loaded-image-remove:hover{
+      background-color: rgba(200, 35, 51, 1);
     }
     
     /* Grid de imágenes */
@@ -415,17 +502,13 @@
       .page{
         margin: 0;
         border: none;
+        page-break-after: always;
       }
       body{
         background:#fff;
       }
-      .logoPlaceholder,
-      .imagePlaceholder{
+      .logoPlaceholder{
         border: 1px solid #ddd;
-      }
-      .imagePlaceholder:hover{
-        background-color: #f9f9f9;
-        border-color: #ccc;
       }
       .date-input {
         -webkit-appearance: none;
@@ -442,19 +525,26 @@
         border: none;
         background: transparent;
       }
+      .novedades-textarea{
+        border: 1px solid #ccc;
+        background: transparent;
+      }
       .cb{
         cursor: default;
       }
       .cb:hover{
         background-color: transparent;
       }
-      .imagePlaceholder{
-        cursor: default;
-      }
-      .remove-image-btn{
+      .export-section{
         display: none !important;
       }
-      .export-section{
+      .upload-prompt{
+        display: none !important;
+      }
+      .loaded-image-remove{
+        display: none !important;
+      }
+      #bulkImageUpload{
         display: none !important;
       }
     }
@@ -567,96 +657,9 @@
         </tr>
         <tr>
           <td class="bigBox" colspan="4">
-            <ul>
-              <li>Siendo las 0:13 ingresa al comedor y se retira 0:30</li>
-              <li>Siendo 0:50 se dirige nuevamente al comedor y se queda hasta las 2:47 que regresa a su sector</li>
-              <li>Siendo las 3:07 se dirige al comedor hasta las 3:37</li>
-            </ul>
-            
-            <!-- Grid de imágenes -->
-            <table class="imageGrid">
-              <!-- Primera fila de imágenes -->
-              <tr>
-                <td class="imageCell">
-                  <div class="timeStamp">0:13 Ingresa comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="1">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="1" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="1">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">0:17 continua en el comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="2">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="2" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="2">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">0:30 regresa a su sector</div>
-                  <div class="imagePlaceholder" data-image-slot="3">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="3" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="3">
-                  </div>
-                </td>
-              </tr>
-              <!-- Segunda fila de imágenes -->
-              <tr>
-                <td class="imageCell">
-                  <div class="timeStamp">0:50 se dirige al comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="4">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="4" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="4">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">1:23 en el comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="5">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="5" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="5">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">2:47 regresa a su sector</div>
-                  <div class="imagePlaceholder" data-image-slot="6">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="6" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="6">
-                  </div>
-                </td>
-              </tr>
-              <!-- Tercera fila de imágenes -->
-              <tr>
-                <td class="imageCell">
-                  <div class="timeStamp">3:07 se dirige al comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="7">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="7" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="7">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">3:20 se encuentra en el comedor</div>
-                  <div class="imagePlaceholder" data-image-slot="8">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="8" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="8">
-                  </div>
-                </td>
-                <td class="imageCell">
-                  <div class="timeStamp">3:37 regresa a su sector</div>
-                  <div class="imagePlaceholder" data-image-slot="9">
-                    <span class="placeholder-text">Imagen CCTV</span>
-                    <button class="remove-image-btn" data-remove-slot="9" title="Eliminar imagen">×</button>
-                    <input type="file" accept="image/png, image/jpeg, image/jpg" data-image-input="9">
-                  </div>
-                </td>
-              </tr>
-            </table>
+            <textarea id="novedadesText" class="novedades-textarea" rows="10" placeholder="Ingrese las novedades del reporte...">Siendo las 0:13 ingresa al comedor y se retira 0:30
+Siendo 0:50 se dirige nuevamente al comedor y se queda hasta las 2:47 que regresa a su sector
+Siendo las 3:07 se dirige al comedor hasta las 3:37</textarea>
           </td>
         </tr>
       </table>
@@ -690,6 +693,27 @@
     </div>
   </div>
 
+  <!-- SEGUNDA PÁGINA: Imágenes CCTV -->
+  <div class="page" id="imagesPage">
+    <div class="page-content">
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 14pt; font-weight: 700;">EVIDENCIA FOTOGRÁFICA - IMÁGENES CCTV</h2>
+      
+      <!-- Área para cargar imágenes -->
+      <div class="image-upload-area">
+        <div class="upload-prompt">
+          <p style="font-weight: 700; margin-bottom: 10px;">Cargar imágenes de evidencia CCTV:</p>
+          <input type="file" id="bulkImageUpload" accept="image/png, image/jpeg, image/jpg" multiple style="margin-bottom: 15px;">
+          <p style="font-size: 9pt; color: #666; margin-top: 5px;">Formatos permitidos: PNG, JPG. Puede seleccionar múltiples archivos.</p>
+        </div>
+        
+        <!-- Contenedor donde se mostrarán las imágenes cargadas -->
+        <div id="loadedImagesContainer"></div>
+      </div>
+
+      <div class="footerNote">Mondelez International Internal — Uso exclusivo</div>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Configurar título del input de fecha
@@ -707,83 +731,71 @@
         console.log('Reportado por actualizado:', selectedValue);
       });
 
-      // ========== MANEJO DE IMÁGENES ==========
-      const imagePlaceholders = document.querySelectorAll('.imagePlaceholder');
-      
-      imagePlaceholders.forEach(placeholder => {
-        const fileInput = placeholder.querySelector('input[type="file"]');
-        const removeBtn = placeholder.querySelector('.remove-image-btn');
-        const slotNumber = placeholder.dataset.imageSlot;
+      // ========== MANEJO DE IMÁGENES - CARGA MÚLTIPLE ==========
+      const bulkImageUpload = document.getElementById('bulkImageUpload');
+      const loadedImagesContainer = document.getElementById('loadedImagesContainer');
+      let loadedImages = []; // Array para almacenar las imágenes cargadas
+
+      bulkImageUpload.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
         
-        // Al hacer click en el placeholder (pero no en el botón de eliminar)
-        placeholder.addEventListener('click', (e) => {
-          // Si el click fue en el botón de eliminar, no abrir selector
-          if (e.target.classList.contains('remove-image-btn')) {
-            return;
-          }
-          fileInput.click();
-        });
-        
-        // Cuando se selecciona un archivo
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          
+        files.forEach(file => {
           if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
             const reader = new FileReader();
             
             reader.onload = (event) => {
-              // Ocultar el texto placeholder
-              const placeholderText = placeholder.querySelector('.placeholder-text');
-              if (placeholderText) {
-                placeholderText.style.display = 'none';
-              }
+              const imageData = {
+                id: Date.now() + Math.random(), // ID único
+                src: event.target.result,
+                fileName: file.name,
+                timestamp: new Date().toLocaleString('es-AR')
+              };
               
-              // Verificar si ya existe una imagen
-              let img = placeholder.querySelector('img');
-              if (!img) {
-                img = document.createElement('img');
-                placeholder.appendChild(img);
-              }
-              
-              // Establecer la imagen
-              img.src = event.target.result;
-              placeholder.classList.add('has-image');
-              
-              console.log(`Imagen cargada en slot ${slotNumber}: ${file.name}`);
+              loadedImages.push(imageData);
+              renderImages();
+              console.log(`Imagen cargada: ${file.name}`);
             };
             
             reader.readAsDataURL(file);
           } else {
-            alert('Por favor, selecciona solo archivos PNG o JPG');
-            fileInput.value = '';
+            alert(`El archivo ${file.name} no es una imagen PNG o JPG válida`);
           }
         });
         
-        // Función para eliminar imagen
-        removeBtn.addEventListener('click', (e) => {
-          e.stopPropagation(); // Evitar que se abra el selector de archivos
-          
-          // Eliminar la imagen
-          const img = placeholder.querySelector('img');
-          if (img) {
-            img.remove();
-          }
-          
-          // Mostrar nuevamente el texto placeholder
-          const placeholderText = placeholder.querySelector('.placeholder-text');
-          if (placeholderText) {
-            placeholderText.style.display = 'block';
-          }
-          
-          // Remover la clase has-image
-          placeholder.classList.remove('has-image');
-          
-          // Resetear el input file
-          fileInput.value = '';
-          
-          console.log(`Imagen eliminada del slot ${slotNumber}`);
-        });
+        // Resetear el input para permitir cargar las mismas imágenes nuevamente si es necesario
+        bulkImageUpload.value = '';
       });
+
+      // Función para renderizar todas las imágenes
+      function renderImages() {
+        loadedImagesContainer.innerHTML = '';
+        
+        loadedImages.forEach((imageData, index) => {
+          const imageItem = document.createElement('div');
+          imageItem.className = 'loaded-image-item';
+          imageItem.dataset.imageId = imageData.id;
+          
+          imageItem.innerHTML = `
+            <button class="loaded-image-remove" data-image-id="${imageData.id}" title="Eliminar imagen">×</button>
+            <img src="${imageData.src}" alt="${imageData.fileName}">
+            <div class="loaded-image-caption">
+              Imagen ${index + 1}: ${imageData.fileName}
+            </div>
+          `;
+          
+          loadedImagesContainer.appendChild(imageItem);
+        });
+        
+        // Agregar event listeners a los botones de eliminar
+        document.querySelectorAll('.loaded-image-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const imageId = parseFloat(e.target.dataset.imageId);
+            loadedImages = loadedImages.filter(img => img.id !== imageId);
+            renderImages();
+            console.log('Imagen eliminada');
+          });
+        });
+      }
 
       // ========== CHECKBOXES INTERACTIVOS ==========
       // Función para manejar checkboxes con exclusión mutua
@@ -825,42 +837,56 @@
         exportPdfBtn.textContent = '⏳ Generando PDF...';
         
         try {
-          // Ocultar temporalmente el botón de exportar y los botones de eliminar
-          const exportSection = document.querySelector('.export-section');
-          const removeButtons = document.querySelectorAll('.remove-image-btn');
-          
-          exportSection.style.display = 'none';
-          removeButtons.forEach(btn => btn.style.display = 'none');
-          
-          // Capturar el contenido de la página
-          const pageElement = document.querySelector('.page');
-          
-          const canvas = await html2canvas(pageElement, {
-            scale: 2, // Mayor calidad
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-          });
-          
-          // Crear PDF
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
             format: 'a4'
           });
+
+          // Ocultar temporalmente el botón de exportar y los botones de eliminar
+          const exportSection = document.querySelector('.export-section');
+          const removeButtons = document.querySelectorAll('.loaded-image-remove');
+          const uploadPrompt = document.querySelector('.upload-prompt');
           
-          // Calcular dimensiones para ajustar al A4
+          exportSection.style.display = 'none';
+          removeButtons.forEach(btn => btn.style.display = 'none');
+          if (uploadPrompt) uploadPrompt.style.display = 'none';
+          
+          // PÁGINA 1: Formulario principal
+          const page1Element = document.querySelectorAll('.page')[0];
+          const canvas1 = await html2canvas(page1Element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
           const imgWidth = 210; // A4 width in mm
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const imgHeight1 = (canvas1.height * imgWidth) / canvas1.width;
+          const imgData1 = canvas1.toDataURL('image/png');
+          pdf.addImage(imgData1, 'PNG', 0, 0, imgWidth, imgHeight1);
           
-          // Agregar imagen al PDF
-          const imgData = canvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          // PÁGINA 2: Imágenes (solo si hay imágenes cargadas)
+          if (loadedImages.length > 0) {
+            pdf.addPage();
+            
+            const page2Element = document.querySelectorAll('.page')[1];
+            const canvas2 = await html2canvas(page2Element, {
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              backgroundColor: '#ffffff'
+            });
+            
+            const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
+            const imgData2 = canvas2.toDataURL('image/png');
+            pdf.addImage(imgData2, 'PNG', 0, 0, imgWidth, imgHeight2);
+          }
           
-          // Generar nombre de archivo con fecha y caso ID
+          // Generar nombre de archivo
           const casoId = document.getElementById('casoId').value || 'CCTV';
-          const fecha = document.getElementById('fechaEventos').value || new Date().toISOString().split('T')[0];
+          const fecha = fechaInput.value || new Date().toISOString().split('T')[0];
           const fileName = `Reporte_CCTV_${casoId}_${fecha}.pdf`;
           
           // Descargar el PDF
@@ -871,6 +897,7 @@
           // Mostrar nuevamente los elementos ocultos
           exportSection.style.display = 'block';
           removeButtons.forEach(btn => btn.style.display = '');
+          if (uploadPrompt) uploadPrompt.style.display = '';
           
         } catch (error) {
           console.error('Error al generar PDF:', error);
@@ -892,7 +919,13 @@
           sitio: 'PLANTA PACHECO',
           casoId: document.getElementById('casoId').value,
           areaEventos: document.getElementById('areaEventos').value,
-          imagenes: {}
+          novedades: document.getElementById('novedadesText').value,
+          imagenes: loadedImages.map((img, index) => ({
+            id: img.id,
+            fileName: img.fileName,
+            timestamp: img.timestamp,
+            position: index + 1
+          }))
         };
 
         // Obtener tipo de reporte seleccionado
@@ -906,25 +939,6 @@
         if (eventosChecked) {
           data.eventosRegistrados = eventosChecked.parentElement.dataset.checkboxValue;
         }
-
-        // Obtener información de imágenes cargadas
-        imagePlaceholders.forEach(placeholder => {
-          const slotNumber = placeholder.dataset.imageSlot;
-          const img = placeholder.querySelector('img');
-          const fileInput = placeholder.querySelector('input[type="file"]');
-          
-          if (img && img.src) {
-            data.imagenes[`slot${slotNumber}`] = {
-              loaded: true,
-              fileName: fileInput.files[0] ? fileInput.files[0].name : 'unknown',
-              dataUrl: img.src
-            };
-          } else {
-            data.imagenes[`slot${slotNumber}`] = {
-              loaded: false
-            };
-          }
-        });
 
         return data;
       };
@@ -943,6 +957,10 @@
       });
       
       document.getElementById('casoId').addEventListener('change', () => {
+        console.log('Datos del formulario:', window.getFormData());
+      });
+      
+      document.getElementById('novedadesText').addEventListener('change', () => {
         console.log('Datos del formulario:', window.getFormData());
       });
     });
