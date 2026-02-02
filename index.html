@@ -1051,43 +1051,6 @@
        * @param {number} pageIndex - Número de página (para encabezado "Continuación")
        * @returns {HTMLElement} - Elemento div con estructura de página A4
        */
-      function createHashTempPage(pageIndex) {
-        const div = document.createElement('div');
-        div.className = 'page hash-temp-page';
-        div.style.position = 'absolute';
-        div.style.top = '-9999px';
-        div.style.left = '0';
-        div.style.width = '210mm';
-        div.style.minHeight = '297mm';
-        div.style.padding = '0';
-        div.style.boxSizing = 'border-box';
-        div.style.border = '1px solid #000';
-        div.style.backgroundColor = '#fff';
-        div.dataset.pageIndex = pageIndex;
-
-        div.innerHTML = `
-          <div class="page-content">
-            <h3 style="text-align:center; font-size:12pt; font-weight:700; margin-bottom:10px; margin-top:0;">
-              CADENA DE CUSTODIA (HASH SHA-256)${pageIndex > 1 ? ` - Continuación ${pageIndex - 1}` : ''}
-            </h3>
-            <table class="form" style="font-size: 9pt; margin-bottom: 20px;">
-              <thead>
-                <tr style="background-color: #f0f0f0;">
-                  <th style="width: 40%; border: 1px solid #000; padding: 4px 6px;">Nombre del Archivo</th>
-                  <th style="width: 60%; border: 1px solid #000; padding: 4px 6px;">Hash SHA-256</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-            <div class="footerNote" style="position: absolute; bottom: 5mm; left: 12mm; right: 12mm; font-size: 9pt; text-align: center; border-top: 1px solid #ccc; padding-top: 5px;">
-              Mondelez International Internal — Uso exclusivo
-            </div>
-          </div>
-        `;
-        return div;
-      }
-
-      /**
        * Captura un elemento DOM y lo agrega al PDF
        * @param {jsPDF} pdf - Instancia de jsPDF
        * @param {HTMLElement} element - Elemento a capturar
