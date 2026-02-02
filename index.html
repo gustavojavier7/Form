@@ -217,7 +217,23 @@
       background-color: #f0f8ff;
     }
     
-    /* Checkboxes - AHORA INTERACTIVOS */
+    /* Radios con estilo "checkbox" */
+    .cb-option{
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cb-input{
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+    }
+
     .cb{
       display:inline-block;
       width: 12px;
@@ -227,15 +243,19 @@
       margin-right: 8px;
       vertical-align: middle;
       position: relative;
-      cursor: pointer;
       transition: background-color 0.1s ease;
     }
-    
-    .cb:hover{
+
+    .cb-option:hover .cb{
       background-color: #f0f0f0;
     }
-    
-    .cb.checked::after{
+
+    .cb-input:focus-visible + .cb{
+      outline: 2px solid #0066cc;
+      outline-offset: 2px;
+    }
+
+    .cb-input:checked + .cb::after{
       content:"X";
       position:absolute;
       left:50%;
@@ -252,7 +272,7 @@
       flex-wrap: nowrap;
       align-items: center;
     }
-    .opts > span{
+    .opts > label{
       white-space: nowrap;
       cursor: pointer;
       user-select: none;
@@ -555,21 +575,31 @@
           <td class="rowLabel">Tipo de Reporte</td>
           <td class="value" colspan="3">
             <div class="opts opts-spread">
-              <span data-checkbox-group="tipoReporte" data-checkbox-value="caso">
-                Caso <span class="cb" data-checkbox="tipoReporte-caso"></span>
-              </span>
-              <span data-checkbox-group="tipoReporte" data-checkbox-value="monitoreo">
-                Monitoreo <span class="cb" data-checkbox="tipoReporte-monitoreo"></span>
-              </span>
-              <span data-checkbox-group="tipoReporte" data-checkbox-value="novedades">
-                Novedades <span class="cb checked" data-checkbox="tipoReporte-novedades"></span>
-              </span>
-              <span data-checkbox-group="tipoReporte" data-checkbox-value="investigacion">
-                Investigación <span class="cb" data-checkbox="tipoReporte-investigacion"></span>
-              </span>
-              <span data-checkbox-group="tipoReporte" data-checkbox-value="auditoria">
-                Auditoría <span class="cb" data-checkbox="tipoReporte-auditoria"></span>
-              </span>
+              <label class="cb-option">
+                Caso
+                <input class="cb-input" type="radio" name="tipoReporte" value="caso">
+                <span class="cb" aria-hidden="true"></span>
+              </label>
+              <label class="cb-option">
+                Monitoreo
+                <input class="cb-input" type="radio" name="tipoReporte" value="monitoreo">
+                <span class="cb" aria-hidden="true"></span>
+              </label>
+              <label class="cb-option">
+                Novedades
+                <input class="cb-input" type="radio" name="tipoReporte" value="novedades" checked>
+                <span class="cb" aria-hidden="true"></span>
+              </label>
+              <label class="cb-option">
+                Investigación
+                <input class="cb-input" type="radio" name="tipoReporte" value="investigacion">
+                <span class="cb" aria-hidden="true"></span>
+              </label>
+              <label class="cb-option">
+                Auditoría
+                <input class="cb-input" type="radio" name="tipoReporte" value="auditoria">
+                <span class="cb" aria-hidden="true"></span>
+              </label>
             </div>
           </td>
         </tr>
@@ -589,12 +619,16 @@
           <td class="rowLabel">1.- ¿Preservar evidencia?</td>
           <td class="value">
             <div class="opts">
-              <span data-checkbox-group="eventosRegistrados" data-checkbox-value="si">
-                Sí <span class="cb" data-checkbox="eventosRegistrados-si"></span>
-              </span>
-              <span data-checkbox-group="eventosRegistrados" data-checkbox-value="no">
-                No <span class="cb checked" data-checkbox="eventosRegistrados-no"></span>
-              </span>
+              <label class="cb-option">
+                Sí
+                <input class="cb-input" type="radio" name="eventosRegistrados" value="si">
+                <span class="cb" aria-hidden="true"></span>
+              </label>
+              <label class="cb-option">
+                No
+                <input class="cb-input" type="radio" name="eventosRegistrados" value="no" checked>
+                <span class="cb" aria-hidden="true"></span>
+              </label>
             </div>
           </td>
           <td class="rowLabel">2.- Área de los eventos:</td>
@@ -820,7 +854,8 @@
         }
         
         // Validación para Cadena de Custodia
-        const siPreservarChecked = document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked')?.parentElement.dataset.checkboxValue === 'si';
+        const preservacionSeleccionada = document.querySelector('input[name="eventosRegistrados"]:checked');
+        const siPreservarChecked = preservacionSeleccionada?.value === 'si';
         const hashesCalculados = document.getElementById('hashTableBody').children.length > 0;
         const preservacionValida = !siPreservarChecked || (siPreservarChecked && hashesCalculados);
 
@@ -943,43 +978,12 @@
         });
       }
 
-      // ========== CHECKBOXES INTERACTIVOS ==========
-      // Función para manejar checkboxes con exclusión mutua
-      function setupCheckboxGroup(groupName) {
-        const groupItems = document.querySelectorAll(`[data-checkbox-group="${groupName}"]`);
-        
-        groupItems.forEach(item => {
-          const checkbox = item.querySelector('.cb');
-          const value = item.dataset.checkboxValue;
-          
-          // Hacer clickeable tanto el span como el checkbox
-          item.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Desmarcar todos los checkboxes del grupo
-            groupItems.forEach(otherItem => {
-              otherItem.querySelector('.cb').classList.remove('checked');
-            });
-            
-            // Marcar el checkbox clickeado
-            checkbox.classList.add('checked');
-            
-            // Log para debugging (opcional)
-            console.log(`${groupName}: ${value} seleccionado`);
-          });
-        });
-      }
-
-      // Inicializar grupos de checkboxes
-      setupCheckboxGroup('tipoReporte');
-      setupCheckboxGroup('eventosRegistrados');
-
       // Control de visibilidad para la sección de preservación
-      const opcionesEventos = document.querySelectorAll('[data-checkbox-group="eventosRegistrados"]');
+      const opcionesEventos = document.querySelectorAll('input[name="eventosRegistrados"]');
       
       opcionesEventos.forEach(opcion => {
-        opcion.addEventListener('click', () => {
-          const valor = opcion.dataset.checkboxValue;
+        opcion.addEventListener('change', () => {
+          const valor = opcion.value;
           if (valor === 'si') {
             preservacionSection.style.display = 'block';
             validateForm(); // Revalidar al marcar "sí" para deshabilitar el botón
@@ -1441,15 +1445,15 @@ function restoreDateInput(input, replacement) {
         };
 
         // Obtener tipo de reporte seleccionado
-        const tipoReporteChecked = document.querySelector('[data-checkbox-group="tipoReporte"] .cb.checked');
+        const tipoReporteChecked = document.querySelector('input[name="tipoReporte"]:checked');
         if (tipoReporteChecked) {
-          data.tipoReporte = tipoReporteChecked.parentElement.dataset.checkboxValue;
+          data.tipoReporte = tipoReporteChecked.value;
         }
 
         // Obtener eventos registrados
-        const eventosChecked = document.querySelector('[data-checkbox-group="eventosRegistrados"] .cb.checked');
+        const eventosChecked = document.querySelector('input[name="eventosRegistrados"]:checked');
         if (eventosChecked) {
-          data.eventosRegistrados = eventosChecked.parentElement.dataset.checkboxValue;
+          data.eventosRegistrados = eventosChecked.value;
         }
 
         return data;
