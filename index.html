@@ -1029,15 +1029,83 @@
         alert('Cálculo de hashes completado e insertado en el reporte.');
       });
 
-      // ========== EXPORTAR A PDF ==========
-     // ========== EXPORTAR A PDF CON PAGINACIÓN INTELIGENTE ==========
+      // ========== FUNCIONES AUXILIARES PARA PAGINACIÓN ==========
+      /**
+       * Crea una página temporal para la tabla de hashes
+       * @param {number} pageIndex - Número de página (para encabezado "Continuación")
+       * @returns {HTMLElement} - Elemento div con estructura de página A4
+       */
+      function createHashTempPage(pageIndex) {
+        const div = document.createElement('div');
+        div.className = 'page hash-temp-page';
+        div.style.position = 'absolute';
+        div.style.top = '-9999px';
+        div.style.left = '0';
+        div.style.width = '210mm';
+        div.style.minHeight = '297mm';
+        div.style.padding = '0';
+        div.style.boxSizing = 'border-box';
+        div.style.border = '1px solid #000';
+        div.style.backgroundColor = '#fff';
+        div.dataset.pageIndex = pageIndex;
+
+        div.innerHTML = `
+          <div class="page-content">
+            <h3 style="text-align:center; font-size:12pt; font-weight:700; margin-bottom:10px; margin-top:0;">
+              CADENA DE CUSTODIA (HASH SHA-256)${pageIndex > 1 ? ` - Continuación ${pageIndex - 1}` : ''}
+            </h3>
+            <table class="form" style="font-size: 9pt; margin-bottom: 20px;">
+              <thead>
+                <tr style="background-color: #f0f0f0;">
+                  <th style="width: 40%; border: 1px solid #000; padding: 4px 6px;">Nombre del Archivo</th>
+                  <th style="width: 60%; border: 1px solid #000; padding: 4px 6px;">Hash SHA-256</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="footerNote" style="position: absolute; bottom: 5mm; left: 12mm; right: 12mm; font-size: 9pt; text-align: center; border-top: 1px solid #ccc; padding-top: 5px;">
+              Mondelez International Internal — Uso exclusivo
+            </div>
+          </div>
+        `;
+        return div;
+      }
+
+      /**
+       * Captura un elemento DOM y lo agrega al PDF
+       * @param {jsPDF} pdf - Instancia de jsPDF
+       * @param {HTMLElement} element - Elemento a capturar
+       * @param {number} pageWidth - Ancho de página en mm
+       * @param {number} pageHeight - Alto de página en mm
+       * @param {boolean} addNewPage - Si debe agregar nueva página al PDF
+       */
+      async function addPageToPdf(pdf, element, pageWidth, pageHeight, addNewPage) {
+        if (addNewPage) pdf.addPage();
+
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
+
+      // ========== EXPORTAR A PDF CON PAGINACIÓN INTELIGENTE ==========
       exportPdfBtn.addEventListener('click', async () => {
         // 1. Validar antes de exportar
         if (!validateForm()) {
           alert('Por favor, complete los campos obligatorios y asegúrese de calcular los hashes si corresponde.');
           return;
         }
-        
+
         // Bloquear UI
         exportPdfBtn.disabled = true;
         exportPdfBtn.textContent = '⏳ Paginando y Generando PDF...';
@@ -1049,7 +1117,7 @@
         const hashBtn = document.getElementById('calculateHashBtn');
         const hashInput = document.getElementById('hashFileInputs');
         const bulkInput = document.getElementById('bulkImageUpload');
-        
+
         // Ocultar elementos de control
         exportSection.style.display = 'none';
         removeButtons.forEach(btn => btn.style.display = 'none');
@@ -1071,135 +1139,118 @@
         try {
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-          
-          const pageWidth = 210; 
-          const pageHeight = 297; 
 
-          // Referencia a la página principal y la tabla
-          const page1 = document.querySelector('.page'); // La primera página
-          const tableBody = document.getElementById('hashTableBody');
-          const rows = Array.from(tableBody.children); // Copia de las filas
-          
-          // Array para guardar las páginas TEMPORALES generadas
-          let tempPages = [];
+          const pageWidth = 210; // A4 width in mm
+          const pageHeight = 297; // A4 height in mm
 
-          // --- LÓGICA DE PAGINACIÓN DE HASHES ---
-          // Si hay filas de hash, verificar si desbordan
-          if (rows.length > 0) {
-            // Altura máxima segura en píxeles (aprox 297mm menos márgenes a 96dpi ~ 1122px)
-            // Usamos scrollHeight para ver el contenido real
-            const MAX_HEIGHT_PX = 1090; // Un poco menos de 1123px para margen de seguridad
-            
-            // Si la página 1 excede la altura, empezamos a mover filas
-            if (page1.scrollHeight > MAX_HEIGHT_PX) {
-              
-              // Crear contenedor para la página 2 (y subsiguientes)
-              let currentPageIndex = 1;
-              let currentTempPage = createTempPage(currentPageIndex);
-              document.body.appendChild(currentTempPage); // Agregar al DOM para que tenga dimensiones
-              tempPages.push(currentTempPage);
-              
-              let currentTableBody = currentTempPage.querySelector('tbody');
+          // Calcular altura máxima del área de contenido (273mm = 297 - 2*12)
+          const MAX_CONTENT_HEIGHT_MM = 273;
+          const mmToPx = (mm) => {
+            const div = document.createElement('div');
+            div.style.width = `${mm}mm`;
+            div.style.position = 'absolute';
+            div.style.top = '-9999px';
+            document.body.appendChild(div);
+            const px = div.offsetWidth;
+            document.body.removeChild(div);
+            return px;
+          };
+          const maxContentHeightPx = mmToPx(MAX_CONTENT_HEIGHT_MM);
 
-              // Iterar desde la última fila hacia arriba para encontrar el punto de corte
-              // O mejor: Sacar filas de la tabla original hasta que la Pag 1 entre en altura
-              
-              // Mover todas las filas a un array en memoria y reconstruir
-              // Es más seguro vaciar la tabla y llenarla hasta que se llene
-              rows.forEach(row => row.remove()); // Sacar todas las filas del DOM visualmente
+          // --- PASO 1: CAPTURAR PÁGINA 1 (FORMULARIO) ---
+          const page1 = document.querySelector('.page');
+          await addPageToPdf(pdf, page1, pageWidth, pageHeight, false);
 
-              let page1Full = false;
+          // --- PASO 2: PAGINAR TABLA DE HASHES ---
+          const hashTableBody = document.getElementById('hashTableBody');
+          const hashRows = Array.from(hashTableBody.children);
 
-              for (let row of rows) {
-                if (!page1Full) {
-                  tableBody.appendChild(row);
-                  // Verificamos si al agregar esta fila nos pasamos
-                  if (page1.scrollHeight > MAX_HEIGHT_PX) {
-                    // Si nos pasamos, esta fila DEBE ir a la siguiente página
-                    row.remove(); 
-                    page1Full = true;
-                    
-                    // Agregar a la página temporal actual
-                    currentTableBody.appendChild(row);
-                  }
-                } else {
-                  // La página 1 ya está llena, agregar a la página temporal actual
-                  currentTableBody.appendChild(row);
-                  
-                  // Verificar si la página temporal se llenó
-                  if (currentTempPage.scrollHeight > MAX_HEIGHT_PX) {
-                    // La fila actual hizo desbordar la Pag 2, moverla a una Pag 3
-                    row.remove();
-                    
-                    // Crear Pag 3
-                    currentPageIndex++;
-                    currentTempPage = createTempPage(currentPageIndex);
-                    document.body.appendChild(currentTempPage);
-                    tempPages.push(currentTempPage);
-                    currentTableBody = currentTempPage.querySelector('tbody');
-                    
-                    currentTableBody.appendChild(row);
-                  }
-                }
+          if (hashRows.length > 0) {
+            // Crear página temporal para la tabla
+            let currentHashPage = createHashTempPage(1);
+            document.body.appendChild(currentHashPage);
+            let currentHashTableBody = currentHashPage.querySelector('tbody');
+
+            // Agregar filas una por una
+            for (const row of hashRows) {
+              const rowClone = row.cloneNode(true);
+              currentHashTableBody.appendChild(rowClone);
+
+              // Verificar si la página se llenó
+              const pageContent = currentHashPage.querySelector('.page-content');
+              if (pageContent.scrollHeight > maxContentHeightPx) {
+                // La fila actual desbordó, removerla y crear nueva página
+                currentHashTableBody.removeChild(rowClone);
+
+                // Crear nueva página de continuación
+                const nextPageNum = parseInt(currentHashPage.dataset.pageIndex, 10) + 1;
+                currentHashPage = createHashTempPage(nextPageNum);
+                document.body.appendChild(currentHashPage);
+                currentHashTableBody = currentHashPage.querySelector('tbody');
+                currentHashTableBody.appendChild(rowClone);
               }
+            }
+
+            // Capturar todas las páginas de hashes
+            const hashPages = document.querySelectorAll('.hash-temp-page');
+            for (const hashPage of hashPages) {
+              await addPageToPdf(pdf, hashPage, pageWidth, pageHeight, true);
+              hashPage.remove();
             }
           }
 
-          // --- RENDERIZADO DE PÁGINAS ---
-          
-          // 1. Renderizar Página 1 (Main Form)
-          await addPageToPdf(pdf, page1, pageWidth, pageHeight, false);
-
-          // 2. Renderizar Páginas Temporales de Hashes (si existen)
-          for (let tempPage of tempPages) {
-            await addPageToPdf(pdf, tempPage, pageWidth, pageHeight, true);
-          }
-
-          // 3. Renderizar Imágenes (Images Page)
-          // Nota: Usamos la lógica anterior de imagen por página para mantener calidad
+          // --- PASO 3: CAPTURAR IMÁGENES (una por página) ---
           if (loadedImages.length > 0) {
-             for (let i = 0; i < loadedImages.length; i++) {
+            for (let i = 0; i < loadedImages.length; i++) {
               const imageData = loadedImages[i];
-              pdf.addPage(); // Nueva hoja en el PDF
-              
+              pdf.addPage();
+
               const img = new Image();
               img.src = imageData.src;
-              await new Promise(r => img.onload = r); // Esperar carga
+              await new Promise(resolve => img.onload = resolve);
 
-              // Calcular dimensiones "fit"
-              const margin = 10;
+              // Calcular dimensiones para ajustar a la página
+              const margin = 10; // márgenes de seguridad
               const maxWidth = pageWidth - (2 * margin);
               const maxHeight = pageHeight - (2 * margin);
-              const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-              const finalW = img.width * ratio;
-              const finalH = img.height * ratio;
-              const xPos = (pageWidth - finalW) / 2;
+              const imgRatio = img.width / img.height;
+              const pageRatio = maxWidth / maxHeight;
+
+              let finalWidth;
+              let finalHeight;
+              if (imgRatio > pageRatio) {
+                // Imagen más ancha que alta (landscape)
+                finalWidth = maxWidth;
+                finalHeight = maxWidth / imgRatio;
+              } else {
+                // Imagen más alta que ancha (portrait)
+                finalHeight = maxHeight;
+                finalWidth = maxHeight * imgRatio;
+              }
+
+              const xPos = (pageWidth - finalWidth) / 2;
               const yPos = margin;
 
-              pdf.addImage(imageData.src, 'JPEG', xPos, yPos, finalW, finalH);
-              
-              // Caption
+              pdf.addImage(imageData.src, 'JPEG', xPos, yPos, finalWidth, finalHeight);
+
+              // Pie de foto
               pdf.setFontSize(10);
+              pdf.setFont('helvetica', 'normal');
               const captionText = `Imagen ${i + 1}: ${imageData.fileName}`;
-              pdf.text(captionText, pageWidth / 2, yPos + finalH + 5, { align: 'center' });
+              pdf.text(captionText, pageWidth / 2, yPos + finalHeight + 5, { align: 'center' });
             }
           }
 
           // --- GUARDAR PDF ---
           const casoId = casoIdInput.value || 'CCTV';
-          const fecha = fechaInput.value || 'Fecha';
-          pdf.save(`Reporte_CCTV_${casoId}_${fecha}.pdf`);
+          const fecha = fechaInput.value || new Date().toISOString().split('T')[0];
+          const fileName = `Reporte_CCTV_${casoId}_${fecha}.pdf`;
+          pdf.save(fileName);
 
-          // --- RESTAURACIÓN (LIMPIEZA) ---
-          // 1. Eliminar páginas temporales del DOM
-          tempPages.forEach(p => p.remove());
-          
-          // 2. Devolver todas las filas a la tabla original (Page 1)
-          rows.forEach(row => tableBody.appendChild(row));
-          
+          console.log('PDF generado exitosamente:', fileName);
         } catch (error) {
           console.error('Error generando PDF:', error);
-          alert('Error al generar PDF. Revise la consola.');
+          alert('Hubo un error al generar el PDF. Por favor, intenta nuevamente.');
         } finally {
           // Restaurar UI
           fechaInput.style.display = '';
@@ -1215,55 +1266,6 @@
           validateForm();
         }
       });
-
-      // --- FUNCIONES AUXILIARES PARA EL PDF ---
-      
-      // Función para clonar la estructura base para una página de continuación
-      function createTempPage(index) {
-        const div = document.createElement('div');
-        div.className = 'page';
-        div.style.position = 'absolute'; // Fuera de flujo visual normal
-        div.style.top = '-9999px';
-        div.style.left = '0';
-        
-        // Estructura interna simplificada
-        div.innerHTML = `
-          <div class="page-content">
-            <h3 style="text-align:center; font-size:12pt; font-weight:700; margin-bottom:10px;">
-              ANEXO CADENA DE CUSTODIA (Continuación ${index})
-            </h3>
-            <table class="form" style="font-size: 9pt;">
-              <thead>
-                <tr style="background-color: #f0f0f0;">
-                  <th style="width: 40%;">Nombre del Archivo</th>
-                  <th style="width: 60%;">Hash SHA-256</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-            <div class="footerNote" style="margin-top:20px;">Mondelez International Internal — Uso exclusivo</div>
-          </div>
-        `;
-        return div;
-      }
-
-      // Función asíncrona para renderizar un elemento DOM a una página PDF
-      async function addPageToPdf(pdf, element, pWidth, pHeight, addNewPage) {
-        if (addNewPage) pdf.addPage();
-        
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff'
-        });
-        
-        const imgHeight = (canvas.height * pWidth) / canvas.width;
-        // Si la imagen generada es menor que A4, usar su altura, si no, ajustar a A4
-        const renderHeight = imgHeight > pHeight ? pHeight : imgHeight;
-        
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pWidth, renderHeight);
-      }
 
       // ========== FUNCIÓN PARA OBTENER DATOS DEL FORMULARIO ==========
       window.getFormData = function() {
