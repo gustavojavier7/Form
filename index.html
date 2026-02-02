@@ -167,6 +167,22 @@
       border: 2px solid #dc3545;
       background-color: #fff5f5;
     }
+
+    .validation-messages{
+      display: none;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border: 1px solid #dc3545;
+      background-color: #fff5f5;
+      color: #b02a37;
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+
+    .validation-messages ul{
+      margin: 0;
+      padding-left: 18px;
+    }
     
     /* Protección contra wrap */
     .oneline{
@@ -648,6 +664,8 @@
         </tr>
       </table>
 
+      <div id="validationMessages" class="validation-messages" role="alert" aria-live="polite"></div>
+
       <!-- Sección de firmas -->
       <div class="signatureSection">
         <table class="signatureTable">
@@ -740,8 +758,10 @@
       const hashFileInputs = document.getElementById('hashFileInputs');
       const hashTableBody = document.getElementById('hashTableBody');
       const cadenaCustodiaContainer = document.getElementById('cadenaCustodiaContainer');
+      const validationMessages = document.getElementById('validationMessages');
       
       let loadedImages = []; // Array para almacenar las imágenes cargadas
+      let hashEntries = [];
 
       // ========== FUNCIÓN PARA FORMATEAR FECHA ==========
       function formatearFechaDisplay(fechaISO) {
@@ -755,13 +775,11 @@
 
       // ========== SINCRONIZACIÓN REPORTADO POR ==========
       
-      // Sincronizar cuando cambia la selección
-      reportadoPorSelect.addEventListener('change', () => {
+      function updateReporteGeneradoPor() {
         const selectedValue = reportadoPorSelect.value;
         reporteGeneradoPorSpan.textContent = selectedValue || 'Choose an item.';
         console.log('Reportado por actualizado:', selectedValue);
-        validateForm(); // Validar al cambiar
-      });
+      }
 
       // ========== GENERACIÓN AUTOMÁTICA DE REPORTE ID ==========
       
@@ -816,50 +834,37 @@
       // ========== VALIDACIÓN DEL FORMULARIO ==========
       
       function validateForm() {
-        const fechaValida = fechaInput.value && fechaInput.value.trim() !== '';
-        const reportadoPorValido = reportadoPorSelect.value && reportadoPorSelect.value.trim() !== '';
-        const casoIdValido = casoIdInput.value && casoIdInput.value.trim() !== '';
-        const areaEventosValida = areaEventosInput.value && areaEventosInput.value.trim() !== '';
-        const novedadesValidas = novedadesTextarea.value && novedadesTextarea.value.trim() !== '';
-        
-        // Actualizar clases de validación visual
-        if (fechaValida) {
-          fechaInput.classList.remove('invalid');
-        } else {
-          fechaInput.classList.add('invalid');
-        }
-        
-        if (reportadoPorValido) {
-          reportadoPorSelect.classList.remove('invalid');
-        } else {
-          reportadoPorSelect.classList.add('invalid');
-        }
-        
-        if (casoIdValido) {
-          casoIdInput.classList.remove('invalid');
-        } else {
-          casoIdInput.classList.add('invalid');
-        }
-        
-        if (areaEventosValida) {
-          areaEventosInput.classList.remove('invalid');
-        } else {
-          areaEventosInput.classList.add('invalid');
-        }
-        
-        if (novedadesValidas) {
-          novedadesTextarea.classList.remove('invalid');
-        } else {
-          novedadesTextarea.classList.add('invalid');
-        }
-        
-        // Validación para Cadena de Custodia
+        const fieldRules = [
+          { key: 'fechaEventos', el: fechaInput, valid: el => el.value.trim() !== '', msg: 'Seleccione fecha.' },
+          { key: 'reportadoPor', el: reportadoPorSelect, valid: el => el.value.trim() !== '', msg: 'Seleccione quién reporta.' },
+          { key: 'casoId', el: casoIdInput, valid: el => el.value.trim() !== '', msg: 'Ingrese el Reporte ID.' },
+          { key: 'areaEventos', el: areaEventosInput, valid: el => el.value.trim() !== '', msg: 'Ingrese el área de los eventos.' },
+          { key: 'novedades', el: novedadesTextarea, valid: el => el.value.trim() !== '', msg: 'Ingrese las novedades.' }
+        ];
+
         const preservacionSeleccionada = document.querySelector('input[name="eventosRegistrados"]:checked');
         const siPreservarChecked = preservacionSeleccionada?.value === 'si';
-        const hashesCalculados = document.getElementById('hashTableBody').children.length > 0;
-        const preservacionValida = !siPreservarChecked || (siPreservarChecked && hashesCalculados);
+        const preservacionRule = {
+          key: 'preservacion',
+          valid: () => !siPreservarChecked || hashEntries.length > 0,
+          msg: 'Debe calcular al menos un hash para preservar evidencia.'
+        };
 
-        const formularioValido = fechaValida && reportadoPorValido && casoIdValido && areaEventosValida && novedadesValidas && preservacionValida;
+        const errors = [];
+
+        fieldRules.forEach(rule => {
+          const isValid = rule.valid(rule.el);
+          rule.el.classList.toggle('invalid', !isValid);
+          if (!isValid) {
+            errors.push(rule.msg);
+          }
+        });
+
+        if (!preservacionRule.valid()) {
+          errors.push(preservacionRule.msg);
+        }
+
+        const formularioValido = errors.length === 0;
         
         if (formularioValido) {
           exportPdfBtn.disabled = false;
@@ -870,49 +875,73 @@
           exportPdfBtn.style.backgroundColor = '#cccccc';
           exportPdfBtn.style.cursor = 'not-allowed';
         }
+
+        renderValidationMessages(errors);
         
         return formularioValido;
       }
+
+      function renderValidationMessages(errors) {
+        if (!validationMessages) return;
+
+        if (errors.length === 0) {
+          validationMessages.style.display = 'none';
+          validationMessages.innerHTML = '';
+          return;
+        }
+
+        const items = errors.map(error => `<li>${error}</li>`).join('');
+        validationMessages.innerHTML = `<strong>Faltan campos obligatorios:</strong><ul>${items}</ul>`;
+        validationMessages.style.display = 'block';
+      }
       
-      // Validar cuando cambia la fecha
-      fechaInput.addEventListener('change', validateForm);
-      fechaInput.addEventListener('input', validateForm);
-      fechaInput.addEventListener('focus', () => {
-        fechaInput.classList.remove('invalid');
-      });
-      fechaInput.addEventListener('blur', validateForm);
-      
-      // Validar cuando cambia el Caso ID
-      casoIdInput.addEventListener('input', validateForm);
-      casoIdInput.addEventListener('change', validateForm);
-      casoIdInput.addEventListener('focus', () => {
-        casoIdInput.classList.remove('invalid');
-      });
-      casoIdInput.addEventListener('blur', validateForm);
-      
-      // Validar cuando cambia el Área de eventos
-      areaEventosInput.addEventListener('input', validateForm);
-      areaEventosInput.addEventListener('change', validateForm);
-      areaEventosInput.addEventListener('focus', () => {
-        areaEventosInput.classList.remove('invalid');
-      });
-      areaEventosInput.addEventListener('blur', validateForm);
-      
-      // Validar cuando cambia Novedades
-      novedadesTextarea.addEventListener('input', validateForm);
-      novedadesTextarea.addEventListener('change', validateForm);
-      novedadesTextarea.addEventListener('focus', () => {
-        novedadesTextarea.classList.remove('invalid');
-      });
-      novedadesTextarea.addEventListener('blur', validateForm);
-      
-      // Validar cuando cambia Reportado por
-      reportadoPorSelect.addEventListener('focus', () => {
-        reportadoPorSelect.classList.remove('invalid');
-      });
-      reportadoPorSelect.addEventListener('blur', validateForm);
+      const trackedFields = new Set([
+        fechaInput,
+        reportadoPorSelect,
+        casoIdInput,
+        areaEventosInput,
+        novedadesTextarea
+      ]);
+
+      function handleFormInteraction(event) {
+        const { target, type } = event;
+        if (!(target instanceof HTMLElement)) return;
+
+        if (target === reportadoPorSelect && type === 'change') {
+          updateReporteGeneradoPor();
+        }
+
+        if (target instanceof HTMLInputElement && target.name === 'eventosRegistrados' && type === 'change') {
+          const valor = target.value;
+          if (valor === 'si') {
+            preservacionSection.style.display = 'block';
+          } else {
+            preservacionSection.style.display = 'none';
+            hashEntries = [];
+            hashTableBody.innerHTML = '';
+            cadenaCustodiaContainer.style.display = 'none';
+          }
+        }
+
+        if (trackedFields.has(target) || (target instanceof HTMLInputElement && target.name === 'eventosRegistrados')) {
+          validateForm();
+        }
+      }
+
+      function handleFieldFocus(event) {
+        const { target } = event;
+        if (trackedFields.has(target)) {
+          target.classList.remove('invalid');
+        }
+      }
+
+      document.addEventListener('input', handleFormInteraction);
+      document.addEventListener('change', handleFormInteraction);
+      document.addEventListener('focusin', handleFieldFocus);
+      document.addEventListener('focusout', handleFormInteraction);
       
       // Validación inicial al cargar la página
+      updateReporteGeneradoPor();
       validateForm();
 
       // ========== MANEJO DE IMÁGENES - CARGA MÚLTIPLE ==========
@@ -978,25 +1007,6 @@
         });
       }
 
-      // Control de visibilidad para la sección de preservación
-      const opcionesEventos = document.querySelectorAll('input[name="eventosRegistrados"]');
-      
-      opcionesEventos.forEach(opcion => {
-        opcion.addEventListener('change', () => {
-          const valor = opcion.value;
-          if (valor === 'si') {
-            preservacionSection.style.display = 'block';
-            validateForm(); // Revalidar al marcar "sí" para deshabilitar el botón
-          } else {
-            preservacionSection.style.display = 'none';
-            validateForm(); // Revalida al marcar "no"
-            // Opcional: limpiar la tabla de hashes si se marca "no"
-            document.getElementById('hashTableBody').innerHTML = '';
-            document.getElementById('cadenaCustodiaContainer').style.display = 'none';
-          }
-        });
-      });
-
       // ========== CÁLCULO DE HASH SHA-256 ==========
 
       async function computeSHA256(file) {
@@ -1016,10 +1026,12 @@
         calculateHashBtn.disabled = true;
         calculateHashBtn.textContent = '⌛ Calculando...';
         hashTableBody.innerHTML = '';
+        hashEntries = [];
         cadenaCustodiaContainer.style.display = 'block';
 
         for (const file of files) {
           const hash = await computeSHA256(file);
+          hashEntries.push({ name: file.name, hash });
           const row = `<tr>
             <td style="word-break: break-all;">${file.name}</td>
             <td style="font-family: monospace; word-break: break-all;">${hash}</td>
